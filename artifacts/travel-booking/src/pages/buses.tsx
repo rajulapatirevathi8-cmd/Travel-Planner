@@ -111,7 +111,7 @@ export default function Buses() {
 
                         <div className="flex items-center justify-between mb-4">
                           <div className="text-center">
-                            <p className="text-2xl font-extrabold">{new Date(bus.departureTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            <p className="text-2xl font-extrabold">{bus.departureTime}</p>
                             <p className="text-sm font-medium text-muted-foreground mt-1">{bus.origin}</p>
                           </div>
                           
@@ -124,7 +124,7 @@ export default function Buses() {
                           </div>
 
                           <div className="text-center">
-                            <p className="text-2xl font-extrabold">{new Date(bus.arrivalTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            <p className="text-2xl font-extrabold">{bus.arrivalTime}</p>
                             <p className="text-sm font-medium text-muted-foreground mt-1">{bus.destination}</p>
                           </div>
                         </div>

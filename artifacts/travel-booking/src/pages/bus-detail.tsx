@@ -45,8 +45,6 @@ export default function BusDetail() {
     );
   }
 
-  const depDate = new Date(bus.departureTime);
-  const arrDate = new Date(bus.arrivalTime);
 
   return (
     <Layout>
@@ -91,18 +89,18 @@ export default function BusDetail() {
                   <div className="relative z-10">
                     <div className="absolute -left-[41px] w-6 h-6 rounded-full bg-primary flex items-center justify-center border-4 border-card"></div>
                     <div>
-                      <p className="text-2xl font-bold">{depDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      <p className="text-2xl font-bold">{bus.departureTime}</p>
                       <p className="font-medium text-lg flex items-center mt-1"><MapPin className="w-4 h-4 mr-1 text-muted-foreground" /> {bus.origin} Boarding Point</p>
-                      <p className="text-sm text-muted-foreground mt-1">{depDate.toLocaleDateString()}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{bus.busType} · {bus.duration}</p>
                     </div>
                   </div>
 
                   <div className="relative z-10">
                     <div className="absolute -left-[41px] w-6 h-6 rounded-full bg-primary flex items-center justify-center border-4 border-card"></div>
                     <div>
-                      <p className="text-2xl font-bold">{arrDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      <p className="text-2xl font-bold">{bus.arrivalTime}</p>
                       <p className="font-medium text-lg flex items-center mt-1"><MapPin className="w-4 h-4 mr-1 text-muted-foreground" /> {bus.destination} Drop Point</p>
-                      <p className="text-sm text-muted-foreground mt-1">{arrDate.toLocaleDateString()}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{bus.seatsAvailable} seats available</p>
                     </div>
                   </div>
                 </div>

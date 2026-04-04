@@ -45,8 +45,6 @@ export default function FlightDetail() {
     );
   }
 
-  const depDate = new Date(flight.departureTime);
-  const arrDate = new Date(flight.arrivalTime);
 
   return (
     <Layout>
@@ -96,9 +94,9 @@ export default function FlightDetail() {
                   <div className="relative z-10 flex md:flex-col items-center gap-4 md:gap-2 mb-8 md:mb-0">
                     <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center border-4 border-card shrink-0"></div>
                     <div className="md:text-center">
-                      <p className="text-xl font-bold">{depDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      <p className="text-xl font-bold">{flight.departureTime}</p>
                       <p className="font-medium">{flight.origin}</p>
-                      <p className="text-xs text-muted-foreground">{depDate.toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{flight.flightNumber}</p>
                     </div>
                   </div>
 
@@ -112,9 +110,9 @@ export default function FlightDetail() {
                   <div className="relative z-10 flex md:flex-col items-center gap-4 md:gap-2">
                     <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center border-4 border-card shrink-0"></div>
                     <div className="md:text-center">
-                      <p className="text-xl font-bold">{arrDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      <p className="text-xl font-bold">{flight.arrivalTime}</p>
                       <p className="font-medium">{flight.destination}</p>
-                      <p className="text-xs text-muted-foreground">{arrDate.toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{flight.duration}</p>
                     </div>
                   </div>
                 </div>
