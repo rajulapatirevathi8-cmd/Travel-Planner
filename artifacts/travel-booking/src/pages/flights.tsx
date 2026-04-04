@@ -118,7 +118,7 @@ export default function Flights() {
 
                         <div className="flex items-center justify-between">
                           <div className="text-center">
-                            <p className="text-2xl font-extrabold">{new Date(flight.departureTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            <p className="text-2xl font-extrabold">{flight.departureTime}</p>
                             <p className="text-sm font-medium text-muted-foreground mt-1">{flight.origin}</p>
                           </div>
                           
@@ -136,7 +136,7 @@ export default function Flights() {
                           </div>
 
                           <div className="text-center">
-                            <p className="text-2xl font-extrabold">{new Date(flight.arrivalTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            <p className="text-2xl font-extrabold">{flight.arrivalTime}</p>
                             <p className="text-sm font-medium text-muted-foreground mt-1">{flight.destination}</p>
                           </div>
                         </div>
