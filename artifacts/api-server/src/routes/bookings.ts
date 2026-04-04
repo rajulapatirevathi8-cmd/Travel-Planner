@@ -44,6 +44,8 @@ router.get("/bookings", async (_req, res): Promise<void> => {
     ...b,
     totalPrice: Number(b.totalPrice),
     createdAt: b.createdAt.toISOString(),
+    passengerPhone: b.passengerPhone ?? undefined,
+    details: b.details ?? undefined,
   }));
   res.json(ListBookingsResponse.parse(mapped));
 });
@@ -114,6 +116,8 @@ router.post("/bookings", async (req, res): Promise<void> => {
       ...booking,
       totalPrice: Number(booking.totalPrice),
       createdAt: booking.createdAt.toISOString(),
+      passengerPhone: booking.passengerPhone ?? undefined,
+      details: booking.details ?? undefined,
     })
   );
 });
@@ -140,6 +144,8 @@ router.get("/bookings/:id", async (req, res): Promise<void> => {
       ...booking,
       totalPrice: Number(booking.totalPrice),
       createdAt: booking.createdAt.toISOString(),
+      passengerPhone: booking.passengerPhone ?? undefined,
+      details: booking.details ?? undefined,
     })
   );
 });
@@ -172,6 +178,8 @@ router.delete("/bookings/:id", async (req, res): Promise<void> => {
       ...updated,
       totalPrice: Number(updated.totalPrice),
       createdAt: updated.createdAt.toISOString(),
+      passengerPhone: updated.passengerPhone ?? undefined,
+      details: updated.details ?? undefined,
     })
   );
 });
