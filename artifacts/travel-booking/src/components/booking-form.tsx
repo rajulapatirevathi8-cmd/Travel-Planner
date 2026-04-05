@@ -13,6 +13,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -235,7 +236,7 @@ export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: B
             </div>
 
             <div className="space-y-1.5">
-              <FormLabel>Coupon Code</FormLabel>
+              <Label>Coupon Code</Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
