@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import Home from "@/pages/home";
-import Admin from "./pages/admin";
+import Admin from "@/pages/admin";
 import Flights from "@/pages/flights";
 import FlightDetail from "@/pages/flight-detail";
 import Buses from "@/pages/buses";
@@ -24,8 +24,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/flights" component={Flights} />
-      <Route path="/flights/:id" component={FlightDetail} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/" component={Admin} />
+      <Route path="/flights/:id" component={FlightDetail} />
       <Route path="/buses" component={Buses} />
       <Route path="/buses/:id" component={BusDetail} />
       <Route path="/hotels" component={Hotels} />

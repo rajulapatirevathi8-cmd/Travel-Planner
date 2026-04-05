@@ -18,6 +18,22 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
+const handlePayment = () => {
+  const options = {
+    key: "rzp_test_xxxxx",
+    amount: totalPrice * 100,
+    currency: "INR",
+    name: "DreamFly",
+    description: "Booking Payment",
+    handler: function () {
+      alert("Payment Successful");
+    },
+  };
+
+  const rzp = new (window as any).Razorpay(options);
+  rzp.open();
+};
+
 const formSchema = z.object({
   passengerName: z.string().min(2, {
     message: "Name must be at least 2 characters.",
@@ -39,7 +55,12 @@ type BookingFormProps = {
   title: string;
 };
 
-export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: BookingFormProps) {
+export function BookingForm({
+  bookingType,
+  referenceId,
+  pricePerUnit,
+  title,
+}: BookingFormProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const createBooking = useCreateBooking();
@@ -51,7 +72,7 @@ export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: B
       passengerEmail: "",
       passengerPhone: "",
       passengers: 1,
-      travelDate: new Date().toISOString().split('T')[0],
+      travelDate: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -83,10 +104,11 @@ export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: B
           toast({
             variant: "destructive",
             title: "Booking Failed",
-            description: "There was an error creating your booking. Please try again.",
+            description:
+              "There was an error creating your booking. Please try again.",
           });
         },
-      }
+      },
     );
   }
 
@@ -119,7 +141,11 @@ export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: B
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="john@example.com" {...field} />
+                      <Input
+                        type="email"
+                        placeholder="john@example.com"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -132,7 +158,11 @@ export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: B
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="+1 (555) 000-0000" {...field} />
+                      <Input
+                        type="tel"
+                        placeholder="+1 (555) 000-0000"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -152,7 +182,9 @@ export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: B
                         min={1}
                         max={10}
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 1)
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -173,18 +205,16 @@ export function BookingForm({ bookingType, referenceId, pricePerUnit, title }: B
                 )}
               />
             </div>
-            
+
             <div className="mt-6 p-4 bg-muted/30 rounded-lg flex justify-between items-center border">
               <div>
                 <p className="text-sm text-muted-foreground">Total Price</p>
-                <p className="text-2xl font-bold text-primary">${totalPrice.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-primary">
+                  ${totalPrice.toFixed(2)}
+                </p>
               </div>
-              <Button type="submit" size="lg" disabled={createBooking.isPending}>
-                {createBooking.isPending ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing</>
-                ) : (
-                  "Confirm Booking"
-                )}
+              <Button size="lg" onClick={handlePayment}>
+                Pay Now
               </Button>
             </div>
           </form>
