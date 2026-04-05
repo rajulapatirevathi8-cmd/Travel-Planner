@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -17,22 +16,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-
-const handlePayment = () => {
-  const options = {
-    key: "rzp_test_xxxxx",
-    amount: totalPrice * 100,
-    currency: "INR",
-    name: "DreamFly",
-    description: "Booking Payment",
-    handler: function () {
-      alert("Payment Successful");
-    },
-  };
-
-  const rzp = new (window as any).Razorpay(options);
-  rzp.open();
-};
 
 const formSchema = z.object({
   passengerName: z.string().min(2, {
@@ -79,7 +62,7 @@ export function BookingForm({
   const passengersCount = form.watch("passengers");
   const totalPrice = pricePerUnit * (passengersCount || 1);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function submitBooking(values: z.infer<typeof formSchema>) {
     createBooking.mutate(
       {
         data: {
@@ -112,6 +95,32 @@ export function BookingForm({
     );
   }
 
+  function handlePayment() {
+    form.trigger().then((isValid) => {
+      if (!isValid) return;
+      const values = form.getValues();
+      const options = {
+        key: "rzp_test_xxxxx",
+        amount: Math.round(totalPrice * 100),
+        currency: "INR",
+        name: "WanderWay",
+        description: "Booking Payment",
+        handler: function () {
+          toast({ title: "Payment Successful!", description: "Creating your booking..." });
+          submitBooking(values);
+        },
+        prefill: {
+          name: values.passengerName,
+          email: values.passengerEmail,
+          contact: values.passengerPhone,
+        },
+        theme: { color: "#f97316" },
+      };
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    });
+  }
+
   return (
     <Card className="w-full shadow-lg border-primary/10">
       <CardHeader className="bg-muted/50 border-b">
@@ -119,7 +128,7 @@ export function BookingForm({
       </CardHeader>
       <CardContent className="pt-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form className="space-y-4">
             <FormField
               control={form.control}
               name="passengerName"
@@ -213,8 +222,17 @@ export function BookingForm({
                   ${totalPrice.toFixed(2)}
                 </p>
               </div>
-              <Button size="lg" onClick={handlePayment}>
-                Pay Now
+              <Button
+                type="button"
+                size="lg"
+                onClick={handlePayment}
+                disabled={createBooking.isPending}
+              >
+                {createBooking.isPending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
+                ) : (
+                  "Pay Now"
+                )}
               </Button>
             </div>
           </form>
