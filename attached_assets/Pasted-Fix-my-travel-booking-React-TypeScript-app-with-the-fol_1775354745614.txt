@@ -1,0 +1,88 @@
+Fix my travel booking React TypeScript app with the following improvements:
+
+========================
+1. ADMIN PANEL FIX
+========================
+- Ensure Markup input field is visible in admin.tsx
+- Add Save button for markup
+- Store markup in localStorage with key "markup"
+- Load markup value on page load using useEffect
+- Show current markup value in input
+
+========================
+2. CURRENCY FIX (IMPORTANT)
+========================
+- All prices must be shown in Indian Rupees (₹)
+- Replace any USD ($) display with ₹
+- Format price like: ₹500, ₹1200 etc
+- Use simple formatting, no dollar anywhere
+
+========================
+3. BOOKING PRICE CALCULATION
+========================
+- Base price = 500 (for now)
+- Get markup from localStorage
+- Apply coupon discount
+
+finalPrice = basePrice + markup - discount
+
+- Show final price in UI clearly
+
+========================
+4. COUPON SYSTEM FIX
+========================
+- Admin can add coupons and save to localStorage ("coupons")
+- Booking page:
+  - Input for coupon
+  - Apply button
+  - Validate coupon
+  - Apply ₹100 discount if valid
+  - Show alert if invalid
+
+========================
+5. PAYMENT FIX (RAZORPAY)
+========================
+- Use Razorpay checkout
+- amount = finalPrice * 100
+- Show "Payment Successful" on success
+- Replace Confirm Booking with Pay Now button
+
+========================
+6. BOOKING SAVE SYSTEM
+========================
+- After payment success:
+  - Save booking in localStorage ("bookings")
+  - Store:
+    name, phone, email, finalPrice
+
+========================
+7. ADMIN BOOKINGS VIEW
+========================
+- Show all bookings in admin panel
+- Display:
+  - Name
+  - Price (₹ format)
+
+========================
+8. UI IMPROVEMENTS
+========================
+- Clean Tailwind layout
+- Sidebar + dashboard cards
+- Proper spacing and alignment
+
+========================
+9. ERROR FIXES
+========================
+- Fix all TypeScript errors
+- No unused variables
+- No JSX errors
+- Proper structure
+
+========================
+
+Give me FULL updated code for:
+- admin.tsx
+- booking-form.tsx
+- flights page price display fix
+
+Keep everything simple and working.

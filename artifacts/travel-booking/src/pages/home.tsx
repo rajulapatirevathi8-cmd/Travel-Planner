@@ -215,7 +215,7 @@ export default function Home() {
                         <span className="text-sm font-semibold bg-white/20 backdrop-blur-md px-3 py-1 rounded-full">
                           {dest.packageCount} Packages
                         </span>
-                        <span className="font-bold">From ${dest.startingPrice}</span>
+                        <span className="font-bold">From ₹{dest.startingPrice}</span>
                       </div>
                     </div>
                   </div>
@@ -262,8 +262,8 @@ export default function Home() {
                     <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{deal.description}</p>
                     <div className="flex items-end justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground line-through">${deal.originalPrice}</p>
-                        <p className="text-2xl font-bold text-foreground">${deal.discountedPrice}</p>
+                        <p className="text-sm text-muted-foreground line-through">₹{deal.originalPrice}</p>
+                        <p className="text-2xl font-bold text-foreground">₹{deal.discountedPrice}</p>
                       </div>
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/${deal.type}s/${deal.referenceId}`}>View Deal</Link>

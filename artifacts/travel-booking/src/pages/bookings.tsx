@@ -137,7 +137,7 @@ export default function Bookings() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
-                      <p className="font-bold text-primary text-lg">${booking.totalPrice}</p>
+                      <p className="font-bold text-primary text-lg">₹{booking.totalPrice}</p>
                     </div>
                   </div>
                 </CardContent>

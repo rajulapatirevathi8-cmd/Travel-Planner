@@ -135,9 +135,9 @@ export default function Packages() {
                     <div>
                       <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase tracking-wider">Starting from</p>
                       <div className="flex items-end gap-2">
-                        <p className="text-3xl font-extrabold text-foreground">${pkg.price}</p>
+                        <p className="text-3xl font-extrabold text-foreground">₹{pkg.price}</p>
                         {pkg.originalPrice && (
-                          <p className="text-sm text-muted-foreground line-through mb-1">${pkg.originalPrice}</p>
+                          <p className="text-sm text-muted-foreground line-through mb-1">₹{pkg.originalPrice}</p>
                         )}
                       </div>
                     </div>

@@ -149,7 +149,7 @@ export default function Hotels() {
                         
                         <div className="w-full text-right mt-auto">
                           <p className="text-sm text-muted-foreground font-medium mb-1">Price per night</p>
-                          <p className="text-3xl font-extrabold text-foreground mb-4">${hotel.pricePerNight}</p>
+                          <p className="text-3xl font-extrabold text-foreground mb-4">₹{hotel.pricePerNight}</p>
                           <Button asChild className="w-full font-bold">
                             <Link href={`/hotels/${hotel.id}`}>View Rooms <ArrowRight className="w-4 h-4 ml-2" /></Link>
                           </Button>

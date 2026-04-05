@@ -196,8 +196,7 @@ export default function Flights() {
                             Price per adult
                           </p>
                           <p className="text-3xl font-extrabold text-primary">
-                            $
-                            {flight.price +
+                            ₹{flight.price +
                               Number(localStorage.getItem("markup") || 0)}
                           </p>
                         </div>

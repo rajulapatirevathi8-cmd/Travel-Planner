@@ -148,7 +148,7 @@ export default function Buses() {
                       <div className="bg-muted/10 p-6 md:w-64 flex flex-col justify-center items-center text-center space-y-4">
                         <div>
                           <p className="text-sm text-muted-foreground font-medium mb-1">Price per seat</p>
-                          <p className="text-3xl font-extrabold text-primary">${bus.price}</p>
+                          <p className="text-3xl font-extrabold text-primary">₹{bus.price}</p>
                         </div>
                         <Button asChild className="w-full font-bold">
                           <Link href={`/buses/${bus.id}`}>Select Seat <ArrowRight className="w-4 h-4 ml-2" /></Link>

@@ -291,18 +291,18 @@ export default function BookingDetail() {
                   <span className="text-muted-foreground">
                     Base Price ({booking.passengers}x)
                   </span>
-                  <span>${(booking.totalPrice * 0.85).toFixed(2)}</span>
+                  <span>₹{(booking.totalPrice * 0.85).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
                     Taxes & Fees (15%)
                   </span>
-                  <span>${(booking.totalPrice * 0.15).toFixed(2)}</span>
+                  <span>₹{(booking.totalPrice * 0.15).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg pt-3 border-t">
                   <span>Total Paid</span>
                   <span className="text-primary">
-                    ${booking.totalPrice.toFixed(2)}
+                    ₹{booking.totalPrice.toFixed(2)}
                   </span>
                 </div>
               </div>

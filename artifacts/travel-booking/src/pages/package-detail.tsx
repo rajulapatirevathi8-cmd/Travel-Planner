@@ -136,11 +136,11 @@ export default function PackageDetail() {
                 <div className="bg-primary text-primary-foreground p-6 text-center">
                   <p className="text-primary-foreground/80 font-medium mb-1 uppercase tracking-wider text-sm">Package Price</p>
                   <div className="flex justify-center items-end gap-2">
-                    <span className="text-5xl font-extrabold">${pkg.price}</span>
+                    <span className="text-5xl font-extrabold">₹{pkg.price}</span>
                     <span className="text-lg mb-1 opacity-80">/ person</span>
                   </div>
                   {pkg.originalPrice && (
-                    <p className="mt-2 text-primary-foreground/70 line-through">Regular price: ${pkg.originalPrice}</p>
+                    <p className="mt-2 text-primary-foreground/70 line-through">Regular price: ₹{pkg.originalPrice}</p>
                   )}
                 </div>
                 <div className="p-6">

@@ -67,7 +67,7 @@ export default function FlightDetail() {
             </div>
             <div className="text-left md:text-right">
               <p className="text-sm text-muted-foreground font-medium mb-1">Price per passenger</p>
-              <p className="text-4xl font-extrabold text-primary">${flight.price}</p>
+              <p className="text-4xl font-extrabold text-primary">₹{flight.price}</p>
             </div>
           </div>
         </div>

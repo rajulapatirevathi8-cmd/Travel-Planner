@@ -67,7 +67,7 @@ export default function BusDetail() {
             </div>
             <div className="text-left md:text-right">
               <p className="text-sm text-muted-foreground font-medium mb-1">Price per seat</p>
-              <p className="text-4xl font-extrabold text-primary">${bus.price}</p>
+              <p className="text-4xl font-extrabold text-primary">₹{bus.price}</p>
             </div>
           </div>
         </div>
