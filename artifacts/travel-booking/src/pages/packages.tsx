@@ -1,19 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { useListPackages } from "@workspace/api-client-react";
+import { usePackagesWithFallback } from "@/lib/use-data-with-fallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Map, Search, ArrowRight, Star, Clock, Filter } from "lucide-react";
+import { Map, Search, ArrowRight, Star, Clock, Filter, Trash2, Sparkles } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AIPackageGenerator } from "@/components/ai-package-generator";
+import { MarkupManager } from "@/components/markup-manager";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Packages() {
-  const { data: packages, isLoading } = useListPackages();
+  const { data: packages, isLoading } = usePackagesWithFallback();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [customPackages, setCustomPackages] = useState<any[]>([]);
+  const { toast } = useToast();
 
-  const filteredPackages = packages?.filter(pkg => 
+  // Load custom packages from localStorage
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("customPackages") ?? "[]");
+    setCustomPackages(saved);
+  }, []);
+
+  const deletePackage = (packageId: number) => {
+    const updated = customPackages.filter(pkg => pkg.id !== packageId);
+    setCustomPackages(updated);
+    localStorage.setItem("customPackages", JSON.stringify(updated));
+    toast({
+      title: "Package Deleted",
+      description: "The package has been removed successfully.",
+    });
+  };
+
+  const handlePackageGenerated = (newPackage: any) => {
+    setCustomPackages([newPackage, ...customPackages]);
+  };
+
+  // Combine API packages with custom packages
+  const allPackages = [...customPackages, ...(Array.isArray(packages) ? packages : [])];
+
+  const filteredPackages = allPackages.filter(pkg => 
     (pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
      pkg.destination.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (typeFilter ? pkg.type === typeFilter : true)
@@ -26,6 +65,12 @@ export default function Packages() {
         <div className="container mx-auto px-4 relative z-10 text-center max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">Curated <span className="text-primary">Adventures</span></h1>
           <p className="text-xl text-muted-foreground mb-10">Handpicked holiday packages for every type of traveler.</p>
+          
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-3 mb-8">
+            <AIPackageGenerator onPackageGenerated={handlePackageGenerated} />
+            <MarkupManager />
+          </div>
           
           <div className="bg-card p-4 rounded-2xl shadow-xl border max-w-3xl mx-auto flex flex-col md:flex-row gap-4 items-center">
             <div className="relative w-full flex-1">
@@ -87,7 +132,10 @@ export default function Packages() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPackages?.map((pkg) => (
+            {filteredPackages?.map((pkg) => {
+              const isCustomPackage = customPackages.some(cp => cp.id === pkg.id);
+              
+              return (
               <Card key={pkg.id} className="overflow-hidden border-0 shadow-lg group hover:shadow-xl transition-all duration-300 rounded-2xl flex flex-col h-full bg-card">
                 <div className="relative h-64 overflow-hidden">
                   <img 
@@ -101,9 +149,50 @@ export default function Packages() {
                     {pkg.type}
                   </div>
                   
+                  {isCustomPackage && (
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold px-3 py-1 rounded-full text-xs shadow-md flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> AI Generated
+                    </div>
+                  )}
+                  
                   {pkg.originalPrice && pkg.price < pkg.originalPrice && (
                     <div className="absolute top-4 right-4 bg-destructive text-destructive-foreground font-bold px-3 py-1 rounded-full text-sm shadow-md">
                       Sale
+                    </div>
+                  )}
+
+                  {/* Delete button for custom packages */}
+                  {isCustomPackage && (
+                    <div className="absolute top-4 right-4">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="w-9 h-9 p-0 rounded-full shadow-lg"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Package?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{pkg.name}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deletePackage(pkg.id)}
+                              className="bg-destructive hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   )}
 
@@ -147,7 +236,7 @@ export default function Packages() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )})}
           </div>
         )}
       </div>

@@ -1,19 +1,29 @@
 import { Layout } from "@/components/layout";
-import { Link, useParams } from "wouter";
-import { useGetHotel } from "@workspace/api-client-react";
-import { BookingForm } from "@/components/booking-form";
+import { Link, useParams, useLocation } from "wouter";
+import { useHotelDetailWithFallback } from "@/lib/use-data-with-fallback";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Star, MapPin, CheckCircle2, BedDouble, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Star, MapPin, CheckCircle2, BedDouble, ShieldCheck, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function HotelDetail() {
   const { id } = useParams();
+  const [, setLocation] = useLocation();
   const hotelId = parseInt(id || "0", 10);
   
-  const { data: hotel, isLoading } = useGetHotel(hotelId, {
-    query: { enabled: !!hotelId, queryKey: [`/api/hotels/${hotelId}`] }
-  });
+  const { data: hotel, isLoading } = useHotelDetailWithFallback(hotelId);
+
+  const handleBookNow = () => {
+    if (!hotel) return;
+    
+    const params = new URLSearchParams({
+      price: hotel.pricePerNight.toString(),
+      title: hotel.name,
+    });
+    
+    setLocation(`/booking/seat-selection/hotel/${hotel.id}?${params.toString()}`);
+  };
 
   if (isLoading) {
     return (
@@ -64,7 +74,7 @@ export default function HotelDetail() {
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold mb-3">{hotel.name}</h1>
               <p className="text-muted-foreground flex items-center text-lg">
-                <MapPin className="w-5 h-5 mr-2 text-primary" /> {hotel.address || hotel.location}
+                <MapPin className="w-5 h-5 mr-2 text-primary" /> {'address' in hotel ? hotel.address : hotel.location}
               </p>
             </div>
             <div className="flex items-center gap-4 bg-background p-4 rounded-xl shadow-sm border">
@@ -116,11 +126,11 @@ export default function HotelDetail() {
             </section>
 
             {/* Room Types */}
-            {hotel.roomTypes && hotel.roomTypes.length > 0 && (
+            {'roomTypes' in hotel && hotel.roomTypes && hotel.roomTypes.length > 0 && (
               <section>
                 <h2 className="text-2xl font-bold mb-6">Available Room Types</h2>
                 <div className="space-y-4">
-                  {hotel.roomTypes.map((room, idx) => (
+                  {hotel.roomTypes.map((room: string, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-6 bg-card rounded-xl border shadow-sm">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -141,12 +151,69 @@ export default function HotelDetail() {
 
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
-              <BookingForm 
-                bookingType="hotel" 
-                referenceId={hotel.id} 
-                pricePerUnit={hotel.pricePerNight} 
-                title={hotel.name}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Book This Hotel</CardTitle>
+                  <CardDescription>{hotel.name}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Price Display */}
+                  <div className="border-t border-b py-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-muted-foreground">Price per night</span>
+                      <span className="text-2xl font-bold text-primary">₹{hotel.pricePerNight + Number(localStorage.getItem("markup") || 0)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Taxes and fees included
+                    </p>
+                  </div>
+
+                  {/* Hotel Info */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Location</span>
+                      <span className="font-medium">{hotel.location}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Rating</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium">{hotel.rating}</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Available Rooms</span>
+                      <span className="font-medium">20</span>
+                    </div>
+                  </div>
+
+                  {/* Book Now Button */}
+                  <Button
+                    onClick={handleBookNow}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Select Rooms & Book
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+
+                  {/* Trust Indicators */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Free cancellation</span>
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Instant confirmation</span>
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Best price guarantee</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
               
               <div className="bg-muted/30 p-6 rounded-xl flex items-start gap-4">
                 <ShieldCheck className="w-8 h-8 text-primary shrink-0" />

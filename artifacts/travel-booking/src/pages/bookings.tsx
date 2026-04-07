@@ -1,13 +1,16 @@
 import { Layout } from "@/components/layout";
-import { useListBookings, useCancelBooking } from "@workspace/api-client-react";
+import { useBookingsWithFallback } from "@/lib/use-data-with-fallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { Plane, Bus, Building2, Map, ExternalLink, AlertCircle, XCircle } from "lucide-react";
+import { Plane, Bus, Building2, Map, ExternalLink, AlertCircle, LogIn } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { migrateBookingTitles } from "@/lib/migrate-bookings";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -19,13 +22,116 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function Bookings() {
-  const { data: bookings, isLoading } = useListBookings();
-  const cancelBooking = useCancelBooking();
+  const [, setLocation] = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  
+  // IMPORTANT: Call ALL hooks before any conditional returns
+  const { data: bookings, isLoading, refetch } = useBookingsWithFallback();
+
+  // Migrate old bookings to add missing titles
+  useEffect(() => {
+    if (isAuthenticated) {
+      const { migrated } = migrateBookingTitles();
+      if (migrated > 0) {
+        // Refetch bookings after migration
+        setTimeout(() => refetch(), 100);
+      }
+    }
+  }, [isAuthenticated, refetch]);
+
+  // Show success message if coming from a successful booking
+  useEffect(() => {
+    if (!isAuthenticated) return; // Skip if not authenticated
+    
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      toast({
+        title: "Booking Confirmed! 🎉",
+        description: "Your booking has been successfully created.",
+        duration: 5000,
+      });
+      // Clear the query parameter
+      window.history.replaceState({}, '', '/bookings');
+      // Refetch bookings to show the new one
+      refetch();
+    }
+  }, [toast, refetch, isAuthenticated]);
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16">
+          <Card className="max-w-md mx-auto text-center">
+            <CardContent className="pt-16 pb-8">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-100 flex items-center justify-center">
+                <LogIn className="w-10 h-10 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-3">Login Required</h2>
+              <p className="text-muted-foreground mb-6">
+                Please login to view your bookings
+              </p>
+              <Button 
+                onClick={() => setLocation("/login")}
+                className="w-full"
+              >
+                Go to Login
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Filter bookings for current user
+  const bookingsArray = (Array.isArray(bookings) ? bookings : [])
+    .filter((booking: any) => booking.userId === user?.id);
+
+  const handleCancel = async (bookingId: string | number | undefined) => {
+    if (!bookingId) {
+      console.error('❌ Cancel failed: No booking ID provided');
+      toast({
+        variant: "destructive",
+        title: "Cannot Cancel",
+        description: "Booking ID is missing. Please try again.",
+      });
+      return;
+    }
+    
+    console.log('🔵 Cancelling booking with ID:', bookingId, typeof bookingId);
+    
+    try {
+      // Call API to cancel booking (MSW will intercept this)
+      const response = await fetch(`/api/bookings/${bookingId}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Booking Cancelled",
+          description: "Your booking has been successfully cancelled.",
+        });
+        // Refetch bookings
+        refetch();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Cancel failed with status:', response.status, errorData);
+        throw new Error(errorData.error || 'Failed to cancel booking');
+      }
+    } catch (error) {
+      console.error('❌ Cancel error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to cancel booking. Please try again.",
+      });
+    }
+  };
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -40,6 +146,7 @@ export default function Bookings() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed': 
+      case 'paid':
         return <Badge className="bg-green-500 hover:bg-green-600">Confirmed</Badge>;
       case 'pending': 
         return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30">Pending</Badge>;
@@ -50,26 +157,42 @@ export default function Bookings() {
     }
   };
 
-  const handleCancel = (id: number) => {
-    cancelBooking.mutate(
-      { id },
-      {
-        onSuccess: () => {
-          toast({
-            title: "Booking Cancelled",
-            description: "Your booking has been successfully cancelled.",
-          });
-          queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-        },
-        onError: () => {
-          toast({
-            variant: "destructive",
-            title: "Cancellation Failed",
-            description: "There was an error cancelling your booking.",
-          });
-        }
-      }
-    );
+  // Get gender-based color scheme
+  const getGenderColors = (gender?: string) => {
+    switch (gender?.toLowerCase()) {
+      case 'male':
+        return {
+          border: 'border-l-4 border-l-blue-500',
+          bg: 'bg-blue-50/30',
+          header: 'bg-blue-50/50',
+          icon: 'bg-blue-100 text-blue-600',
+          accent: 'text-blue-600'
+        };
+      case 'female':
+        return {
+          border: 'border-l-4 border-l-pink-500',
+          bg: 'bg-pink-50/30',
+          header: 'bg-pink-50/50',
+          icon: 'bg-pink-100 text-pink-600',
+          accent: 'text-pink-600'
+        };
+      case 'other':
+        return {
+          border: 'border-l-4 border-l-purple-500',
+          bg: 'bg-purple-50/30',
+          header: 'bg-purple-50/50',
+          icon: 'bg-purple-100 text-purple-600',
+          accent: 'text-purple-600'
+        };
+      default:
+        return {
+          border: '',
+          bg: '',
+          header: 'bg-muted/10',
+          icon: 'bg-primary/10 text-primary',
+          accent: 'text-primary'
+        };
+    }
   };
 
   return (
@@ -88,7 +211,7 @@ export default function Bookings() {
               <Skeleton key={i} className="h-64 w-full rounded-xl" />
             ))}
           </div>
-        ) : !bookings || bookings.length === 0 ? (
+        ) : !bookingsArray || bookingsArray.length === 0 ? (
           <div className="text-center py-24 bg-card rounded-2xl border shadow-sm max-w-2xl mx-auto">
             <Map className="w-16 h-16 mx-auto text-muted-foreground/30 mb-6" />
             <h3 className="text-2xl font-bold mb-2">No bookings yet</h3>
@@ -99,24 +222,30 @@ export default function Bookings() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {bookings.sort((a,b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()).map((booking) => (
-              <Card key={booking.id} className={`overflow-hidden transition-all border-muted shadow-sm hover:shadow-md ${booking.status === 'cancelled' ? 'opacity-75 bg-muted/30' : ''}`}>
-                <CardHeader className="pb-4 border-b bg-muted/10 flex flex-row items-center justify-between space-y-0">
+            {bookingsArray.sort((a: any,b: any) => new Date(b.bookingDate || b.createdAt || b.timestamp || 0).getTime() - new Date(a.bookingDate || a.createdAt || a.timestamp || 0).getTime()).map((booking: any) => {
+              const bookingStatus = booking.status || booking.paymentStatus || 'pending';
+              const bookingId = booking.id || booking.bookingId || booking.referenceId;
+              const bookingType = booking.type || booking.bookingType || 'package';
+              const genderColors = getGenderColors(booking.customerGender);
+              
+              return (
+              <Card key={booking.id || booking.bookingId} className={`overflow-hidden transition-all shadow-sm hover:shadow-md ${genderColors.border} ${genderColors.bg} ${bookingStatus === 'cancelled' ? 'opacity-75' : ''}`}>
+                <CardHeader className={`pb-4 border-b ${genderColors.header} flex flex-row items-center justify-between space-y-0`}>
                   <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-xl ${booking.status === 'cancelled' ? 'bg-muted' : 'bg-primary/10 text-primary'}`}>
-                      {getIcon(booking.bookingType)}
+                    <div className={`p-3 rounded-xl ${bookingStatus === 'cancelled' ? 'bg-muted text-muted-foreground' : genderColors.icon}`}>
+                      {getIcon(bookingType)}
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">
-                        {booking.bookingType} • ID: #{booking.id}
+                        {bookingType.toUpperCase()} • ID: #{booking.id || booking.referenceId}
                       </p>
-                      <CardTitle className="text-lg">
-                        {booking.details?.title as string || `Booking #${booking.referenceId}`}
+                      <CardTitle className="text-lg line-clamp-2">
+                        {booking.title || booking.details?.title || `${bookingType.charAt(0).toUpperCase() + bookingType.slice(1)} Booking #${booking.id || booking.referenceId}`}
                       </CardTitle>
                     </div>
                   </div>
                   <div className="shrink-0">
-                    {getStatusBadge(booking.status)}
+                    {getStatusBadge(bookingStatus)}
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -128,27 +257,60 @@ export default function Bookings() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Passengers</p>
+                      <p className="text-sm text-muted-foreground mb-1">{bookingType === 'hotel' ? 'Guests' : 'Passengers'}</p>
                       <p className="font-semibold text-foreground">{booking.passengers}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Passenger Name</p>
-                      <p className="font-semibold text-foreground truncate">{booking.passengerName}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{bookingType === 'hotel' ? 'Guest Name' : 'Customer Name'}</p>
+                      <p className="font-semibold text-foreground truncate">{booking.customerName || booking.passengerName}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Total Amount</p>
-                      <p className="font-bold text-primary text-lg">₹{booking.totalPrice}</p>
+                      <p className="font-bold text-primary text-lg">₹{booking.amount || booking.totalAmount || booking.totalPrice}</p>
                     </div>
+                    
+                    {/* Seat Numbers Display */}
+                    {booking.selectedSeats && booking.selectedSeats.length > 0 && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {bookingType === 'hotel' ? 'Room Numbers' : 'Seat Numbers'}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {booking.selectedSeats.map((seat: string, index: number) => (
+                            <Badge 
+                              key={`${seat}-${index}`} 
+                              variant="secondary" 
+                              className="px-2 py-1 text-xs font-mono"
+                            >
+                              {seat}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {booking.paymentMethod && (
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Payment Method</p>
+                        <p className="font-semibold text-foreground uppercase">{booking.paymentMethod}</p>
+                      </div>
+                    )}
+                    {booking.emiDetails && (
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">EMI</p>
+                        <p className="font-semibold text-foreground">{booking.emiDetails.tenure} months @ ₹{booking.emiDetails.monthlyAmount}/mo</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="bg-muted/5 border-t p-4 flex justify-between">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/bookings/${booking.id}`}>
+                    <Link href={`/bookings/${bookingId}`}>
                       View Details <ExternalLink className="w-3 h-3 ml-2" />
                     </Link>
                   </Button>
                   
-                  {booking.status !== 'cancelled' && (
+                  {bookingStatus !== 'cancelled' && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -169,10 +331,9 @@ export default function Bookings() {
                           <AlertDialogCancel>Keep Booking</AlertDialogCancel>
                           <AlertDialogAction 
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => handleCancel(booking.id)}
-                            disabled={cancelBooking.isPending}
+                            onClick={() => handleCancel(bookingId)}
                           >
-                            {cancelBooking.isPending ? "Cancelling..." : "Yes, Cancel Booking"}
+                            Yes, Cancel Booking
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -180,7 +341,7 @@ export default function Bookings() {
                   )}
                 </CardFooter>
               </Card>
-            ))}
+            )})}
           </div>
         )}
       </div>

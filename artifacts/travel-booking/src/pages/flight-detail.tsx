@@ -1,19 +1,29 @@
 import { Layout } from "@/components/layout";
-import { Link, useParams } from "wouter";
-import { useGetFlight } from "@workspace/api-client-react";
-import { BookingForm } from "@/components/booking-form";
+import { Link, useParams, useLocation } from "wouter";
+import { useFlightDetailWithFallback } from "@/lib/use-data-with-fallback";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Plane, Clock, CheckCircle2, ShieldCheck, BaggageClaim, Utensils } from "lucide-react";
+import { ArrowLeft, Plane, Clock, CheckCircle2, ShieldCheck, BaggageClaim, Utensils, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FlightDetail() {
   const { id } = useParams();
+  const [, setLocation] = useLocation();
   const flightId = parseInt(id || "0", 10);
   
-  const { data: flight, isLoading } = useGetFlight(flightId, {
-    query: { enabled: !!flightId, queryKey: [`/api/flights/${flightId}`] }
-  });
+  const { data: flight, isLoading } = useFlightDetailWithFallback(flightId);
+
+  const handleBookNow = () => {
+    if (!flight) return;
+    
+    const params = new URLSearchParams({
+      price: flight.price.toString(),
+      title: `${flight.origin} to ${flight.destination}`,
+    });
+    
+    setLocation(`/booking/seat-selection/flight/${flight.id}?${params.toString()}`);
+  };
 
   if (isLoading) {
     return (
@@ -67,7 +77,9 @@ export default function FlightDetail() {
             </div>
             <div className="text-left md:text-right">
               <p className="text-sm text-muted-foreground font-medium mb-1">Price per passenger</p>
-              <p className="text-4xl font-extrabold text-primary">₹{flight.price}</p>
+              <p className="text-4xl font-extrabold text-primary">
+                ₹{flight.price + Number(localStorage.getItem("markup") || 0)}
+              </p>
             </div>
           </div>
         </div>
@@ -172,12 +184,72 @@ export default function FlightDetail() {
 
           <div className="lg:col-span-1">
             <div className="sticky top-24">
-              <BookingForm 
-                bookingType="flight" 
-                referenceId={flight.id} 
-                pricePerUnit={flight.price} 
-                title={`${flight.origin} to ${flight.destination}`}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Book This Flight</CardTitle>
+                  <CardDescription>
+                    {`${flight.origin} to ${flight.destination}`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Price Display */}
+                  <div className="border-t border-b py-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-muted-foreground">Price per passenger</span>
+                      <span className="text-2xl font-bold text-primary">₹{flight.price + Number(localStorage.getItem("markup") || 0)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Taxes and fees included
+                    </p>
+                  </div>
+
+                  {/* Flight Info */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Airline</span>
+                      <span className="font-medium">{flight.airline}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Class</span>
+                      <span className="font-medium uppercase">{flight.class}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span className="font-medium">{flight.duration}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Available Seats</span>
+                      <span className="font-medium">{flight.seatsAvailable || 50}</span>
+                    </div>
+                  </div>
+
+                  {/* Book Now Button */}
+                  <Button
+                    onClick={handleBookNow}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Select Seats & Book
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+
+                  {/* Trust Indicators */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Free cancellation within 24 hours</span>
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Instant booking confirmation</span>
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Secure payment processing</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout";
 import { Link, useParams } from "wouter";
-import { useGetPackage } from "@workspace/api-client-react";
+import { usePackageDetailWithFallback } from "@/lib/use-data-with-fallback";
 import { BookingForm } from "@/components/booking-form";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,9 +11,7 @@ export default function PackageDetail() {
   const { id } = useParams();
   const packageId = parseInt(id || "0", 10);
   
-  const { data: pkg, isLoading } = useGetPackage(packageId, {
-    query: { enabled: !!packageId, queryKey: [`/api/packages/${packageId}`] }
-  });
+  const { data: pkg, isLoading } = usePackageDetailWithFallback(packageId);
 
   if (isLoading) {
     return (

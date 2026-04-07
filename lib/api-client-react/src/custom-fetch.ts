@@ -360,7 +360,18 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  let response: Response;
+  try {
+    response = await fetch(input, { ...init, method, headers });
+  } catch (error) {
+    // Handle network errors (e.g., ERR_CONNECTION_REFUSED when backend is down)
+    console.warn(`Backend connection failed: ${error instanceof Error ? error.message : 'Unknown error'}. Using fallback data.`);
+    
+    // Create a custom error response for connection failures
+    const connectionError = new Error(`Failed to connect to backend: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    (connectionError as any).code = 'ECONNREFUSED';
+    throw connectionError;
+  }
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

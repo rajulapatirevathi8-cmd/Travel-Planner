@@ -1,16 +1,83 @@
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { useGetPopularDestinations, useGetFeaturedDeals, useGetStatsSummary } from "@workspace/api-client-react";
+import { useDestinationsWithFallback, useDealsWithFallback, useStatsWithFallback } from "@/lib/use-data-with-fallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plane, Bus, Building2, Map, Search, ArrowRight, Star, ShieldCheck, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AutocompleteInput } from "@/components/autocomplete-input";
+import { citySuggestions, hotelCitySuggestions, packageDestinations } from "@/lib/city-suggestions";
+import { useState } from "react";
 
 export default function Home() {
-  const { data: destinations, isLoading: destinationsLoading } = useGetPopularDestinations();
-  const { data: deals, isLoading: dealsLoading } = useGetFeaturedDeals();
-  const { data: stats } = useGetStatsSummary();
+  const { data: destinations, isLoading: destinationsLoading } = useDestinationsWithFallback();
+  const { data: deals, isLoading: dealsLoading } = useDealsWithFallback();
+  const { data: stats } = useStatsWithFallback();
+
+  // Search form states
+  const [flightFrom, setFlightFrom] = useState("");
+  const [flightTo, setFlightTo] = useState("");
+  const [flightDate, setFlightDate] = useState("");
+  const [hotelLocation, setHotelLocation] = useState("");
+  const [hotelCheckIn, setHotelCheckIn] = useState("");
+  const [hotelCheckOut, setHotelCheckOut] = useState("");
+  const [busFrom, setBusFrom] = useState("");
+  const [busTo, setBusTo] = useState("");
+  const [busDate, setBusDate] = useState("");
+  const [packageDestination, setPackageDestination] = useState("");
+
+  // State for validation messages
+  const [flightError, setFlightError] = useState(false);
+  const [hotelError, setHotelError] = useState(false);
+  const [busError, setBusError] = useState(false);
+
+  // Handler functions for search with validation - require ALL fields including dates
+  const handleFlightSearch = (e: React.MouseEvent) => {
+    if (!flightFrom.trim() || !flightTo.trim() || !flightDate.trim()) {
+      e.preventDefault();
+      setFlightError(true);
+      setTimeout(() => setFlightError(false), 3000);
+    }
+  };
+
+  const handleHotelSearch = (e: React.MouseEvent) => {
+    if (!hotelLocation.trim() || !hotelCheckIn.trim() || !hotelCheckOut.trim()) {
+      e.preventDefault();
+      setHotelError(true);
+      setTimeout(() => setHotelError(false), 3000);
+    }
+  };
+
+  const handleBusSearch = (e: React.MouseEvent) => {
+    if (!busFrom.trim() || !busTo.trim() || !busDate.trim()) {
+      e.preventDefault();
+      setBusError(true);
+      setTimeout(() => setBusError(false), 3000);
+    }
+  };
+
+  // Helper function to build search URLs with parameters only if ALL required values exist
+  const getFlightsSearchUrl = () => {
+    if (flightFrom.trim() && flightTo.trim() && flightDate.trim()) {
+      return `/flights?from=${encodeURIComponent(flightFrom)}&to=${encodeURIComponent(flightTo)}&date=${encodeURIComponent(flightDate)}&search=true`;
+    }
+    return '/flights';
+  };
+
+  const getHotelsSearchUrl = () => {
+    if (hotelLocation.trim() && hotelCheckIn.trim() && hotelCheckOut.trim()) {
+      return `/hotels?location=${encodeURIComponent(hotelLocation)}&checkIn=${encodeURIComponent(hotelCheckIn)}&checkOut=${encodeURIComponent(hotelCheckOut)}&search=true`;
+    }
+    return '/hotels';
+  };
+
+  const getBusesSearchUrl = () => {
+    if (busFrom.trim() && busTo.trim() && busDate.trim()) {
+      return `/buses?from=${encodeURIComponent(busFrom)}&to=${encodeURIComponent(busTo)}&date=${encodeURIComponent(busDate)}&search=true`;
+    }
+    return '/buses';
+  };
 
   return (
     <Layout>
@@ -58,41 +125,89 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">From</label>
-                      <input type="text" placeholder="City or Airport" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <AutocompleteInput
+                        placeholder="City or Airport"
+                        suggestions={citySuggestions}
+                        value={flightFrom}
+                        onChange={setFlightFrom}
+                      />
                     </div>
                     <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">To</label>
-                      <input type="text" placeholder="City or Airport" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <AutocompleteInput
+                        placeholder="City or Airport"
+                        suggestions={citySuggestions}
+                        value={flightTo}
+                        onChange={setFlightTo}
+                      />
                     </div>
                     <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</label>
-                      <input type="date" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <input 
+                        type="date" 
+                        value={flightDate}
+                        onChange={(e) => setFlightDate(e.target.value)}
+                        className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                      />
                     </div>
                     <div className="md:col-span-1 flex items-end">
-                      <Button asChild size="lg" className="w-full h-12 text-md font-bold">
-                        <Link href="/flights">
-                          <Search className="w-5 h-5 mr-2" /> Search Flights
-                        </Link>
-                      </Button>
+                      <div className="w-full">
+                        <Button asChild size="lg" className="w-full h-12 text-md font-bold">
+                          <Link href={getFlightsSearchUrl()} onClick={handleFlightSearch}>
+                            <Search className="w-5 h-5 mr-2" /> Search Flights
+                          </Link>
+                        </Button>
+                        {flightError && (
+                          <p className="text-red-600 text-xs mt-2 font-medium">
+                            ⚠️ Please fill the required fields
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
                 <TabsContent value="hotels" className="pt-6 pb-2 px-2">
                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-2 space-y-1">
+                    <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Location</label>
-                      <input type="text" placeholder="Where are you going?" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <AutocompleteInput
+                        placeholder="Where are you going?"
+                        suggestions={hotelCitySuggestions}
+                        value={hotelLocation}
+                        onChange={setHotelLocation}
+                      />
                     </div>
                     <div className="md:col-span-1 space-y-1">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dates</label>
-                      <input type="date" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Check-in</label>
+                      <input 
+                        type="date" 
+                        value={hotelCheckIn}
+                        onChange={(e) => setHotelCheckIn(e.target.value)}
+                        className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                      />
+                    </div>
+                    <div className="md:col-span-1 space-y-1">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Check-out</label>
+                      <input 
+                        type="date" 
+                        value={hotelCheckOut}
+                        onChange={(e) => setHotelCheckOut(e.target.value)}
+                        className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                      />
                     </div>
                     <div className="md:col-span-1 flex items-end">
-                      <Button asChild size="lg" className="w-full h-12 text-md font-bold">
-                        <Link href="/hotels">
-                          <Search className="w-5 h-5 mr-2" /> Search Hotels
-                        </Link>
-                      </Button>
+                      <div className="w-full">
+                        <Button asChild size="lg" className="w-full h-12 text-md font-bold">
+                          <Link href={getHotelsSearchUrl()} onClick={handleHotelSearch}>
+                            <Search className="w-5 h-5 mr-2" /> Search Hotels
+                          </Link>
+                        </Button>
+                        {hotelError && (
+                          <p className="text-red-600 text-xs mt-2 font-medium">
+                            ⚠️ Please fill the required fields
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
@@ -100,22 +215,44 @@ export default function Home() {
                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leaving From</label>
-                      <input type="text" placeholder="City" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <AutocompleteInput
+                        placeholder="City"
+                        suggestions={hotelCitySuggestions}
+                        value={busFrom}
+                        onChange={setBusFrom}
+                      />
                     </div>
                     <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Going To</label>
-                      <input type="text" placeholder="City" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <AutocompleteInput
+                        placeholder="City"
+                        suggestions={hotelCitySuggestions}
+                        value={busTo}
+                        onChange={setBusTo}
+                      />
                     </div>
                     <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</label>
-                      <input type="date" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <input 
+                        type="date" 
+                        value={busDate}
+                        onChange={(e) => setBusDate(e.target.value)}
+                        className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                      />
                     </div>
                     <div className="md:col-span-1 flex items-end">
-                      <Button asChild size="lg" className="w-full h-12 text-md font-bold">
-                        <Link href="/buses">
-                          <Search className="w-5 h-5 mr-2" /> Search Buses
-                        </Link>
-                      </Button>
+                      <div className="w-full">
+                        <Button asChild size="lg" className="w-full h-12 text-md font-bold">
+                          <Link href={getBusesSearchUrl()} onClick={handleBusSearch}>
+                            <Search className="w-5 h-5 mr-2" /> Search Buses
+                          </Link>
+                        </Button>
+                        {busError && (
+                          <p className="text-red-600 text-xs mt-2 font-medium">
+                            ⚠️ Please fill the required fields
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
@@ -123,7 +260,12 @@ export default function Home() {
                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-2 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Destination</label>
-                      <input type="text" placeholder="Where do you want to go?" className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                      <AutocompleteInput
+                        placeholder="Where do you want to go?"
+                        suggestions={packageDestinations}
+                        value={packageDestination}
+                        onChange={setPackageDestination}
+                      />
                     </div>
                     <div className="md:col-span-1 space-y-1">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Package Type</label>
@@ -199,7 +341,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {destinations?.slice(0, 4).map((dest) => (
+              {Array.isArray(destinations) && destinations.slice(0, 4).map((dest) => (
                 <Link key={dest.id} href={`/packages?destination=${dest.name}`}>
                   <div className="group relative h-80 rounded-2xl overflow-hidden cursor-pointer">
                     <img 
@@ -242,7 +384,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {deals?.slice(0, 3).map((deal) => (
+              {Array.isArray(deals) && deals.slice(0, 3).map((deal) => (
                 <Card key={deal.id} className="overflow-hidden border-0 shadow-lg group hover-elevate hover:shadow-xl transition-all">
                   <div className="relative h-48 overflow-hidden">
                     <img 

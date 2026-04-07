@@ -23,6 +23,13 @@ export const bookingsTable = pgTable("bookings", {
   passengers: integer("passengers").notNull().default(1),
   travelDate: text("travel_date").notNull(),
   details: jsonb("details"),
+  // Payment fields
+  paymentMethod: text("payment_method"), // card, upi, wallet, emi
+  paymentStatus: text("payment_status").notNull().default("pending"), // pending, paid, failed
+  paymentId: text("payment_id"), // Razorpay payment ID
+  razorpayOrderId: text("razorpay_order_id"), // Razorpay order ID
+  razorpaySignature: text("razorpay_signature"), // Payment verification signature
+  emiDetails: jsonb("emi_details"), // EMI tenure, monthly amount, etc.
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

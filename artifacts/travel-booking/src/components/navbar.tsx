@@ -1,89 +1,239 @@
 import { Link, useLocation } from "wouter";
-import { Plane, Bus, Building2, Map, User, Menu } from "lucide-react";
+import { Plane, Bus, Building2, Palmtree, User, Menu, LogOut, Settings, Ticket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/auth-context";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const [location] = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const navItems = [
-    { href: "/flights", label: "Flights", icon: Plane },
-    { href: "/buses", label: "Buses", icon: Bus },
-    { href: "/hotels", label: "Hotels", icon: Building2 },
-    { href: "/packages", label: "Packages", icon: Map },
-    { href: "/bookings", label: "My Bookings", icon: User },
+    { href: "/flights", label: "Flights", icon: Plane, color: "text-blue-600" },
+    { href: "/hotels", label: "Hotels", icon: Building2, color: "text-green-600" },
+    { href: "/buses", label: "Bus", icon: Bus, color: "text-orange-600" },
+    { href: "/packages", label: "Holidays", icon: Palmtree, color: "text-purple-600" },
   ];
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex gap-6 md:gap-10">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="inline-block font-bold text-xl text-primary font-sans">
-              WanderWay
-            </span>
+    <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
+      <div className="container mx-auto">
+        {/* Top Bar */}
+        <div className="flex h-16 items-center justify-between px-4">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2 group">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-md transition-transform group-hover:scale-105">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                WanderWay
+              </span>
+              <span className="text-[10px] text-muted-foreground -mt-1">Explore the world</span>
+            </div>
           </Link>
-          <nav className="hidden md:flex gap-6">
+
+          {/* Main Navigation - Desktop */}
+          <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const isActive = location.startsWith(item.href);
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center text-sm font-medium transition-colors hover:text-foreground/80 ${
-                    location.startsWith(item.href)
-                      ? "text-foreground"
-                      : "text-foreground/60"
-                  }`}
-                >
-                  <Icon className="mr-2 h-4 w-4" />
-                  {item.label}
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "flex items-center gap-2 h-12 px-4 rounded-lg transition-all",
+                      isActive
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "hover:bg-muted/50 text-foreground/70"
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", isActive ? item.color : "")} />
+                    <span className="text-sm">{item.label}</span>
+                  </Button>
                 </Link>
               );
             })}
           </nav>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sheet>
-            <SheetTrigger asChild>
+
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-3">
+            {/* My Bookings Button - Desktop */}
+            <Link href="/bookings" className="hidden md:block">
               <Button
-                variant="ghost"
-                className="px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+                variant={location.startsWith("/bookings") ? "default" : "outline"}
+                size="sm"
+                className="gap-2"
               >
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle Menu</span>
+                <Ticket className="h-4 w-4" />
+                My Bookings
               </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="pr-0">
-              <Link href="/" className="flex items-center space-x-2">
-                <span className="font-bold">WanderWay</span>
+            </Link>
+
+            {/* User Menu */}
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10 border-2 border-primary/20">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold">
+                        {getInitials(user?.name || "User")}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/bookings" className="cursor-pointer">
+                      <Ticket className="mr-2 h-4 w-4" />
+                      My Bookings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-destructive cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/login">
+                <Button size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Login
+                </Button>
               </Link>
-              <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
-                <div className="flex flex-col space-y-3">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`flex items-center text-sm font-medium transition-colors hover:text-foreground/80 ${
-                          location.startsWith(item.href)
-                            ? "text-foreground"
-                            : "text-foreground/60"
-                        }`}
+            )}
+
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                >
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80 p-0">
+                <div className="flex flex-col h-full">
+                  {/* Mobile Logo */}
+                  <div className="p-6 border-b">
+                    <Link href="/" className="flex items-center space-x-2">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                        <Sparkles className="h-6 w-6 text-white" />
+                      </div>
+                      <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        WanderWay
+                      </span>
+                    </Link>
+                  </div>
+
+                  {/* Mobile Navigation */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    <div className="flex flex-col space-y-2">
+                      {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location.startsWith(item.href);
+                        return (
+                          <Link key={item.href} href={item.href}>
+                            <Button
+                              variant={isActive ? "secondary" : "ghost"}
+                              className={cn(
+                                "w-full justify-start gap-3 h-12",
+                                isActive && "bg-primary/10 text-primary font-semibold"
+                              )}
+                            >
+                              <Icon className={cn("h-5 w-5", isActive ? item.color : "")} />
+                              {item.label}
+                            </Button>
+                          </Link>
+                        );
+                      })}
+                      
+                      <div className="pt-4 border-t">
+                        <Link href="/bookings">
+                          <Button
+                            variant={location.startsWith("/bookings") ? "secondary" : "ghost"}
+                            className="w-full justify-start gap-3 h-12"
+                          >
+                            <Ticket className="h-5 w-5" />
+                            My Bookings
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile User Section */}
+                  {isAuthenticated && user && (
+                    <div className="p-6 border-t bg-muted/30">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Avatar className="h-10 w-10 border-2 border-primary/20">
+                          <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold">
+                            {getInitials(user.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{user.name}</p>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={logout}
+                        className="w-full gap-2 text-destructive hover:text-destructive"
                       >
-                        <Icon className="mr-2 h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-          <div className="hidden md:flex md:items-center md:gap-2">
-            <Button variant="ghost">Sign In</Button>
-            <Button>Sign Up</Button>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

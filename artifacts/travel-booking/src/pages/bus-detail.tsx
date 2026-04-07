@@ -1,19 +1,29 @@
 import { Layout } from "@/components/layout";
-import { Link, useParams } from "wouter";
-import { useGetBus } from "@workspace/api-client-react";
-import { BookingForm } from "@/components/booking-form";
+import { Link, useParams, useLocation } from "wouter";
+import { useBusDetailWithFallback } from "@/lib/use-data-with-fallback";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Bus as BusIcon, Clock, CheckCircle2, ShieldCheck, MapPin } from "lucide-react";
+import { ArrowLeft, Bus as BusIcon, Clock, CheckCircle2, ShieldCheck, MapPin, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function BusDetail() {
   const { id } = useParams();
+  const [, setLocation] = useLocation();
   const busId = parseInt(id || "0", 10);
   
-  const { data: bus, isLoading } = useGetBus(busId, {
-    query: { enabled: !!busId, queryKey: [`/api/buses/${busId}`] }
-  });
+  const { data: bus, isLoading } = useBusDetailWithFallback(busId);
+
+  const handleBookNow = () => {
+    if (!bus) return;
+    
+    const params = new URLSearchParams({
+      price: bus.price.toString(),
+      title: `${bus.origin} to ${bus.destination}`,
+    });
+    
+    setLocation(`/booking/seat-selection/bus/${bus.id}?${params.toString()}`);
+  };
 
   if (isLoading) {
     return (
@@ -67,7 +77,9 @@ export default function BusDetail() {
             </div>
             <div className="text-left md:text-right">
               <p className="text-sm text-muted-foreground font-medium mb-1">Price per seat</p>
-              <p className="text-4xl font-extrabold text-primary">₹{bus.price}</p>
+              <p className="text-4xl font-extrabold text-primary">
+                ₹{bus.price + Number(localStorage.getItem("markup") || 0)}
+              </p>
             </div>
           </div>
         </div>
@@ -134,12 +146,72 @@ export default function BusDetail() {
 
           <div className="lg:col-span-1">
             <div className="sticky top-24">
-              <BookingForm 
-                bookingType="bus" 
-                referenceId={bus.id} 
-                pricePerUnit={bus.price} 
-                title={`${bus.origin} to ${bus.destination}`}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Book This Bus</CardTitle>
+                  <CardDescription>
+                    {`${bus.origin} to ${bus.destination}`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Price Display */}
+                  <div className="border-t border-b py-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-muted-foreground">Price per passenger</span>
+                      <span className="text-2xl font-bold text-primary">₹{bus.price + Number(localStorage.getItem("markup") || 0)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Taxes and fees included
+                    </p>
+                  </div>
+
+                  {/* Bus Info */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Operator</span>
+                      <span className="font-medium">{bus.operator}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Bus Type</span>
+                      <span className="font-medium">{bus.busType}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span className="font-medium">{bus.duration}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Available Seats</span>
+                      <span className="font-medium">{bus.seatsAvailable || 40}</span>
+                    </div>
+                  </div>
+
+                  {/* Book Now Button */}
+                  <Button
+                    onClick={handleBookNow}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Select Seats & Book
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+
+                  {/* Trust Indicators */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Safe and secure travel</span>
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>Instant booking confirmation</span>
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>24/7 customer support</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

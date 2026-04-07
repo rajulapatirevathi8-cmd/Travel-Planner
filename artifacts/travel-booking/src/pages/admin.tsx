@@ -1,438 +1,856 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useListBookings } from "@workspace/api-client-react";
-import {
-  Plane, Bus, Building2, Map, DollarSign, TrendingUp,
-  Calendar, LayoutDashboard, Tag, Settings, ChevronRight,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Plane, 
+  Bus, 
+  Building2, 
+  Map, 
+  CreditCard, 
+  Users, 
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Settings,
+  Package,
+  Tag,
+  FileText,
+  Plus,
+  Trash2,
+  Calendar,
+  Percent,
+  IndianRupee
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
-type Section = "dashboard" | "flights" | "hotels" | "bus" | "holidays" | "coupons";
-
-type LocalBooking = {
-  name: string;
-  phone: string;
-  email: string;
-  finalPrice: number;
-  bookedAt: string;
-};
-
-type Coupon = {
-  code: string;
-  discount: number;
-};
-
-export default function Admin() {
-  const { data: bookings, isLoading } = useListBookings();
+export default function AdminDashboard() {
+  const [balance] = useState(480);
   const { toast } = useToast();
 
-  const [section, setSection] = useState<Section>("dashboard");
-  const [markup, setMarkup] = useState<string>("");
-  const [newCouponCode, setNewCouponCode] = useState("");
-  const [newCouponDiscount, setNewCouponDiscount] = useState("");
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [localBookings, setLocalBookings] = useState<LocalBooking[]>([]);
+  // Coupon state
+  const [coupons, setCoupons] = useState<Array<{
+    code: string;
+    discount: number;
+    discountType: "fixed" | "percentage";
+    validUntil: string;
+  }>>([]);
+  const [newCoupon, setNewCoupon] = useState({
+    code: "",
+    discount: "",
+    discountType: "fixed" as "fixed" | "percentage",
+    validUntil: ""
+  });
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
 
+  // Package state
+  const [packages, setPackages] = useState<Array<{
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    duration: string;
+    destination: string;
+  }>>([]);
+  const [showPackageDialog, setShowPackageDialog] = useState(false);
+  const [newPackage, setNewPackage] = useState({
+    name: "",
+    description: "",
+    price: "",
+    duration: "",
+    destination: ""
+  });
+  const [showDeletePackageDialog, setShowDeletePackageDialog] = useState(false);
+  const [packageToDelete, setPackageToDelete] = useState<string | null>(null);
+
+  // Load coupons and packages from localStorage
   useEffect(() => {
-    const savedMarkup = localStorage.getItem("markup") ?? "";
-    setMarkup(savedMarkup);
-    const savedCoupons: Coupon[] = JSON.parse(localStorage.getItem("coupons") ?? "[]");
-    setCoupons(savedCoupons);
-    const savedBookings: LocalBooking[] = JSON.parse(localStorage.getItem("bookings") ?? "[]");
-    setLocalBookings(savedBookings);
+    const savedCoupons = localStorage.getItem("coupons");
+    if (savedCoupons) {
+      try {
+        setCoupons(JSON.parse(savedCoupons));
+      } catch (e) {
+        console.error("Error loading coupons:", e);
+        setCoupons([]);
+      }
+    }
+
+    const savedPackages = localStorage.getItem("packages");
+    if (savedPackages) {
+      try {
+        setPackages(JSON.parse(savedPackages));
+      } catch (e) {
+        console.error("Error loading packages:", e);
+        setPackages([]);
+      }
+    }
   }, []);
 
-  function saveMarkup() {
-    const num = parseFloat(markup);
-    if (isNaN(num) || num < 0) {
-      toast({ variant: "destructive", title: "Invalid markup", description: "Enter a valid positive number." });
-      return;
-    }
-    localStorage.setItem("markup", markup);
-    toast({ title: "Markup saved", description: `Markup set to $${markup}` });
-  }
+  // Save coupons to localStorage
+  const saveCoupons = (updatedCoupons: typeof coupons) => {
+    localStorage.setItem("coupons", JSON.stringify(updatedCoupons));
+    setCoupons(updatedCoupons);
+  };
 
-  function addCoupon() {
-    const code = newCouponCode.trim().toUpperCase();
-    const discount = parseFloat(newCouponDiscount);
+  // Add new coupon
+  const handleAddCoupon = () => {
+    const code = newCoupon.code.trim().toUpperCase();
+    const discount = parseFloat(newCoupon.discount);
+    const validUntil = newCoupon.validUntil;
+
     if (!code) {
-      toast({ variant: "destructive", title: "Invalid coupon", description: "Enter a coupon code." });
+      toast({
+        variant: "destructive",
+        title: "Invalid Coupon Code",
+        description: "Please enter a coupon code.",
+      });
       return;
     }
+
     if (isNaN(discount) || discount <= 0) {
-      toast({ variant: "destructive", title: "Invalid discount", description: "Enter a valid discount amount." });
+      toast({
+        variant: "destructive",
+        title: "Invalid Discount",
+        description: "Please enter a valid discount amount greater than 0.",
+      });
       return;
     }
-    if (coupons.find((c) => c.code === code)) {
-      toast({ variant: "destructive", title: "Duplicate coupon", description: "This coupon code already exists." });
+
+    if (newCoupon.discountType === "percentage" && discount > 100) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Percentage",
+        description: "Percentage discount cannot exceed 100%.",
+      });
       return;
     }
-    const updated = [...coupons, { code, discount }];
-    setCoupons(updated);
-    localStorage.setItem("coupons", JSON.stringify(updated));
-    setNewCouponCode("");
-    setNewCouponDiscount("");
-    toast({ title: "Coupon added", description: `${code} — $${discount} off` });
-  }
 
-  function deleteCoupon(code: string) {
-    const updated = coupons.filter((c) => c.code !== code);
-    setCoupons(updated);
-    localStorage.setItem("coupons", JSON.stringify(updated));
-    toast({ title: "Coupon removed" });
-  }
+    if (!validUntil) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Expiry Date",
+        description: "Please select an expiry date.",
+      });
+      return;
+    }
 
+    if (coupons.some(c => c.code === code)) {
+      toast({
+        variant: "destructive",
+        title: "Duplicate Coupon",
+        description: `Coupon code "${code}" already exists.`,
+      });
+      return;
+    }
+
+    const updatedCoupons = [
+      ...coupons,
+      {
+        code,
+        discount,
+        discountType: newCoupon.discountType,
+        validUntil
+      }
+    ];
+
+    saveCoupons(updatedCoupons);
+
+    toast({
+      title: "Coupon Added Successfully!",
+      description: `Coupon "${code}" has been created.`,
+    });
+
+    setNewCoupon({
+      code: "",
+      discount: "",
+      discountType: "fixed",
+      validUntil: ""
+    });
+  };
+
+  // Delete coupon
+  const handleDeleteCoupon = (code: string) => {
+    setCouponToDelete(code);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteCoupon = () => {
+    if (!couponToDelete) return;
+
+    const updatedCoupons = coupons.filter(c => c.code !== couponToDelete);
+    saveCoupons(updatedCoupons);
+
+    toast({
+      title: "Coupon Deleted",
+      description: `Coupon "${couponToDelete}" has been removed.`,
+    });
+
+    setShowDeleteDialog(false);
+    setCouponToDelete(null);
+  };
+
+  // Check if coupon is expired
+  const isCouponExpired = (validUntil: string) => {
+    const expiryDate = new Date(validUntil);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return expiryDate < today;
+  };
+
+  // Package Management Functions
+  const handleAddPackage = () => {
+    const name = newPackage.name.trim();
+    const description = newPackage.description.trim();
+    const price = parseFloat(newPackage.price);
+    const duration = newPackage.duration.trim();
+    const destination = newPackage.destination.trim();
+
+    if (!name) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Package Name",
+        description: "Please enter a package name.",
+      });
+      return;
+    }
+
+    if (!description) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Description",
+        description: "Please enter a package description.",
+      });
+      return;
+    }
+
+    if (isNaN(price) || price <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Price",
+        description: "Please enter a valid price greater than 0.",
+      });
+      return;
+    }
+
+    if (!duration) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Duration",
+        description: "Please enter package duration (e.g., 5 Days 4 Nights).",
+      });
+      return;
+    }
+
+    if (!destination) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Destination",
+        description: "Please enter a destination.",
+      });
+      return;
+    }
+
+    const newPackageData = {
+      id: `PKG-${Date.now()}`,
+      name,
+      description,
+      price,
+      duration,
+      destination
+    };
+
+    const updatedPackages = [...packages, newPackageData];
+    setPackages(updatedPackages);
+    localStorage.setItem("packages", JSON.stringify(updatedPackages));
+
+    toast({
+      title: "Package Added Successfully!",
+      description: `Package "${name}" has been created.`,
+    });
+
+    setNewPackage({
+      name: "",
+      description: "",
+      price: "",
+      duration: "",
+      destination: ""
+    });
+    setShowPackageDialog(false);
+  };
+
+  const handleDeletePackage = (id: string) => {
+    setPackageToDelete(id);
+    setShowDeletePackageDialog(true);
+  };
+
+  const confirmDeletePackage = () => {
+    if (!packageToDelete) return;
+
+    const updatedPackages = packages.filter(p => p.id !== packageToDelete);
+    setPackages(updatedPackages);
+    localStorage.setItem("packages", JSON.stringify(updatedPackages));
+
+    const deletedPackage = packages.find(p => p.id === packageToDelete);
+    toast({
+      title: "Package Deleted",
+      description: `Package "${deletedPackage?.name}" has been removed.`,
+    });
+
+    setShowDeletePackageDialog(false);
+    setPackageToDelete(null);
+  };
+
+  // Mock statistics data
   const stats = {
-    total: bookings?.length ?? 0,
-    flights: bookings?.filter((b) => b.bookingType === "flight").length ?? 0,
-    buses: bookings?.filter((b) => b.bookingType === "bus").length ?? 0,
-    hotels: bookings?.filter((b) => b.bookingType === "hotel").length ?? 0,
-    packages: bookings?.filter((b) => b.bookingType === "package").length ?? 0,
-    revenue: bookings?.reduce((sum, b) => sum + b.totalPrice, 0) ?? 0,
-    confirmed: bookings?.filter((b) => b.status === "confirmed").length ?? 0,
-    cancelled: bookings?.filter((b) => b.status === "cancelled").length ?? 0,
+    flightBookings: 63,
+    hotelBookings: 1,
+    holidayBookings: 0,
+    busBookings: 16,
+    visaBookings: 0,
+    activitiesBookings: 0,
+    totalRevenue: 480,
   };
-
-  const bookingTypeIcon = (type: string) => {
-    if (type === "flight") return <Plane className="w-4 h-4" />;
-    if (type === "bus") return <Bus className="w-4 h-4" />;
-    if (type === "hotel") return <Building2 className="w-4 h-4" />;
-    return <Map className="w-4 h-4" />;
-  };
-
-  const statusVariant = (status: string): "default" | "destructive" | "secondary" => {
-    if (status === "confirmed") return "default";
-    if (status === "cancelled") return "destructive";
-    return "secondary";
-  };
-
-  const navItems: { id: Section; label: string; icon: React.ReactNode }[] = [
-    { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: "flights", label: "Flights", icon: <Plane className="w-4 h-4" /> },
-    { id: "hotels", label: "Hotels", icon: <Building2 className="w-4 h-4" /> },
-    { id: "bus", label: "Bus", icon: <Bus className="w-4 h-4" /> },
-    { id: "holidays", label: "Holidays", icon: <Map className="w-4 h-4" /> },
-    { id: "coupons", label: "Coupons", icon: <Tag className="w-4 h-4" /> },
-  ];
 
   return (
     <Layout>
-      <div className="flex min-h-screen">
-        <aside className="w-56 shrink-0 bg-card border-r flex flex-col">
-          <div className="p-5 border-b">
-            <p className="font-extrabold text-primary text-lg">WanderWay</p>
-            <p className="text-xs text-muted-foreground">Admin Panel</p>
-          </div>
-          <nav className="flex-1 p-3 space-y-1">
-            {navItems.map(({ id, label, icon }) => (
-              <button
-                key={id}
-                onClick={() => setSection(id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  section === id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {icon}
-                {label}
-                {section === id && <ChevronRight className="w-3 h-3 ml-auto" />}
-              </button>
-            ))}
-          </nav>
-          <div className="p-4 border-t">
-            <div className="flex items-center gap-2">
-              <Settings className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Settings</span>
-            </div>
-            <div className="mt-3 space-y-1">
-              <p className="text-xs text-muted-foreground">Markup</p>
-              <div className="flex gap-1">
-                <Input
-                  type="number"
-                  placeholder="$0"
-                  value={markup}
-                  onChange={(e) => setMarkup(e.target.value)}
-                  className="h-7 text-xs"
-                />
-                <Button size="sm" className="h-7 text-xs px-2" onClick={saveMarkup}>Save</Button>
+      <div className="min-h-screen bg-muted/30">
+        {/* Header */}
+        <div className="bg-primary text-primary-foreground py-6 px-6 shadow-lg">
+          <div className="container mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                <Settings className="w-7 h-7" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                <p className="text-primary-foreground/80 text-sm">Manage bookings, coupons, and more</p>
               </div>
             </div>
+            <div className="text-right">
+              <p className="text-sm opacity-90">Account Balance</p>
+              <p className="text-3xl font-bold">₹{balance.toLocaleString()}</p>
+            </div>
           </div>
-        </aside>
+        </div>
 
-        <main className="flex-1 overflow-auto bg-muted/20">
-          <div className="p-6 border-b bg-card">
-            <h1 className="text-2xl font-extrabold capitalize">{section}</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              {section === "dashboard" ? "Overview of all bookings and revenue" :
-               section === "coupons" ? "Manage discount coupon codes" :
-               `Manage ${section} bookings`}
-            </p>
+        <div className="container mx-auto px-6 py-8">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 hover:shadow-xl transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Plane className="w-8 h-8 opacity-80" />
+                  <span className="text-3xl font-bold">{stats.flightBookings}</span>
+                </div>
+                <p className="text-sm font-medium opacity-90">Flight Bookings</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 hover:shadow-xl transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Building2 className="w-8 h-8 opacity-80" />
+                  <span className="text-3xl font-bold">{stats.hotelBookings}</span>
+                </div>
+                <p className="text-sm font-medium opacity-90">Hotel Bookings</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 hover:shadow-xl transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Map className="w-8 h-8 opacity-80" />
+                  <span className="text-3xl font-bold">{stats.holidayBookings}</span>
+                </div>
+                <p className="text-sm font-medium opacity-90">Holiday Bookings</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-0 hover:shadow-xl transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Bus className="w-8 h-8 opacity-80" />
+                  <span className="text-3xl font-bold">{stats.busBookings}</span>
+                </div>
+                <p className="text-sm font-medium opacity-90">Bus Bookings</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-pink-500 to-pink-600 text-white border-0 hover:shadow-xl transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <CreditCard className="w-8 h-8 opacity-80" />
+                  <span className="text-3xl font-bold">{stats.visaBookings}</span>
+                </div>
+                <p className="text-sm font-medium opacity-90">Visa Bookings</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-gray-700 to-gray-800 text-white border-0 hover:shadow-xl transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Package className="w-8 h-8 opacity-80" />
+                  <span className="text-3xl font-bold">{stats.activitiesBookings}</span>
+                </div>
+                <p className="text-sm font-medium opacity-90">Activities</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 hover:shadow-xl transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <TrendingUp className="w-8 h-8 opacity-80" />
+                  <span className="text-3xl font-bold">₹{stats.totalRevenue}</span>
+                </div>
+                <p className="text-sm font-medium opacity-90">Total Revenue</p>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="p-6 space-y-6">
-            {section === "dashboard" && (
-              <>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="pt-5">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-muted-foreground font-medium">Total Bookings</p>
-                        <Calendar className="w-4 h-4 text-primary" />
-                      </div>
-                      {isLoading ? <Skeleton className="h-8 w-16" /> : <p className="text-3xl font-extrabold">{stats.total}</p>}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-5">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-muted-foreground font-medium">Total Revenue</p>
-                        <DollarSign className="w-4 h-4 text-primary" />
-                      </div>
-                      {isLoading ? <Skeleton className="h-8 w-24" /> : <p className="text-3xl font-extrabold">${stats.revenue.toLocaleString()}</p>}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-5">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-muted-foreground font-medium">Confirmed</p>
-                        <TrendingUp className="w-4 h-4 text-green-500" />
-                      </div>
-                      {isLoading ? <Skeleton className="h-8 w-16" /> : <p className="text-3xl font-extrabold text-green-600">{stats.confirmed}</p>}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-5">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-muted-foreground font-medium">Cancelled</p>
-                        <Calendar className="w-4 h-4 text-destructive" />
-                      </div>
-                      {isLoading ? <Skeleton className="h-8 w-16" /> : <p className="text-3xl font-extrabold text-destructive">{stats.cancelled}</p>}
-                    </CardContent>
-                  </Card>
-                </div>
+          {/* Main Content Tabs */}
+          <Tabs defaultValue="coupons" className="space-y-6">
+            <TabsList className="bg-primary/10 p-1">
+              <TabsTrigger value="coupons">Coupons</TabsTrigger>
+              <TabsTrigger value="packages">Packages</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+            </TabsList>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { label: "Flights", count: stats.flights, icon: <Plane className="w-5 h-5" />, color: "bg-blue-50 text-blue-600" },
-                    { label: "Buses", count: stats.buses, icon: <Bus className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
-                    { label: "Hotels", count: stats.hotels, icon: <Building2 className="w-5 h-5" />, color: "bg-purple-50 text-purple-600" },
-                    { label: "Packages", count: stats.packages, icon: <Map className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-                  ].map(({ label, count, icon, color }) => (
-                    <Card key={label}>
-                      <CardContent className="pt-5">
-                        <div className={`inline-flex p-2 rounded-lg ${color} mb-2`}>{icon}</div>
-                        <p className="text-xs text-muted-foreground font-medium">{label}</p>
-                        {isLoading ? <Skeleton className="h-7 w-12 mt-1" /> : <p className="text-2xl font-bold mt-1">{count}</p>}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                <Card>
-                  <CardHeader><CardTitle>All Bookings</CardTitle></CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-                    ) : bookings && bookings.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b text-muted-foreground">
-                              <th className="text-left py-3 pr-4 font-semibold">Ref ID</th>
-                              <th className="text-left py-3 pr-4 font-semibold">Type</th>
-                              <th className="text-left py-3 pr-4 font-semibold">Passenger</th>
-                              <th className="text-left py-3 pr-4 font-semibold">Travel Date</th>
-                              <th className="text-left py-3 pr-4 font-semibold">Price</th>
-                              <th className="text-left py-3 font-semibold">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[...bookings]
-                              .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-                              .map((booking) => (
-                                <tr key={booking.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                                  <td className="py-3 pr-4">
-                                    <span className="font-mono text-xs bg-muted px-2 py-1 rounded">WND-{String(booking.id).padStart(6, "0")}</span>
-                                  </td>
-                                  <td className="py-3 pr-4">
-                                    <div className="flex items-center gap-2 capitalize">
-                                      <span className="text-primary">{bookingTypeIcon(booking.bookingType)}</span>
-                                      {booking.bookingType}
-                                    </div>
-                                  </td>
-                                  <td className="py-3 pr-4">
-                                    <p className="font-medium">{booking.passengerName}</p>
-                                    <p className="text-xs text-muted-foreground">{booking.passengerEmail}</p>
-                                  </td>
-                                  <td className="py-3 pr-4 text-muted-foreground">{booking.travelDate}</td>
-                                  <td className="py-3 pr-4 font-semibold">${booking.totalPrice.toLocaleString()}</td>
-                                  <td className="py-3">
-                                    <Badge variant={statusVariant(booking.status)} className="capitalize">{booking.status}</Badge>
-                                  </td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground py-8">No bookings yet.</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {localBookings.length > 0 && (
-                  <Card>
-                    <CardHeader><CardTitle>Razorpay Payments</CardTitle></CardHeader>
-                    <CardContent>
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b text-muted-foreground">
-                            <th className="text-left py-3 pr-4 font-semibold">Name</th>
-                            <th className="text-left py-3 pr-4 font-semibold">Email</th>
-                            <th className="text-left py-3 pr-4 font-semibold">Phone</th>
-                            <th className="text-left py-3 pr-4 font-semibold">Amount Paid</th>
-                            <th className="text-left py-3 font-semibold">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[...localBookings].reverse().map((b, i) => (
-                            <tr key={i} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                              <td className="py-3 pr-4 font-medium">{b.name}</td>
-                              <td className="py-3 pr-4 text-muted-foreground">{b.email}</td>
-                              <td className="py-3 pr-4 text-muted-foreground">{b.phone}</td>
-                              <td className="py-3 pr-4 font-semibold text-primary">₹{b.finalPrice.toLocaleString()}</td>
-                              <td className="py-3 text-muted-foreground text-xs">{new Date(b.bookedAt).toLocaleString()}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
-            )}
-
-            {(section === "flights" || section === "hotels" || section === "bus" || section === "holidays") && (
+            {/* Coupons Tab */}
+            <TabsContent value="coupons">
               <Card>
-                <CardHeader>
-                  <CardTitle className="capitalize">{section} Bookings</CardTitle>
+                <CardHeader className="bg-primary text-primary-foreground">
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="w-5 h-5" />
+                    Coupon Management
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-                  ) : (() => {
-                    const typeMap: Record<string, string> = { flights: "flight", hotels: "hotel", bus: "bus", holidays: "package" };
-                    const filtered = bookings?.filter((b) => b.bookingType === typeMap[section]) ?? [];
-                    return filtered.length > 0 ? (
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b text-muted-foreground">
-                            <th className="text-left py-3 pr-4 font-semibold">Ref ID</th>
-                            <th className="text-left py-3 pr-4 font-semibold">Passenger</th>
-                            <th className="text-left py-3 pr-4 font-semibold">Travel Date</th>
-                            <th className="text-left py-3 pr-4 font-semibold">Price</th>
-                            <th className="text-left py-3 font-semibold">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filtered.map((booking) => (
-                            <tr key={booking.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                              <td className="py-3 pr-4">
-                                <span className="font-mono text-xs bg-muted px-2 py-1 rounded">WND-{String(booking.id).padStart(6, "0")}</span>
-                              </td>
-                              <td className="py-3 pr-4">
-                                <p className="font-medium">{booking.passengerName}</p>
-                                <p className="text-xs text-muted-foreground">{booking.passengerEmail}</p>
-                              </td>
-                              <td className="py-3 pr-4 text-muted-foreground">{booking.travelDate}</td>
-                              <td className="py-3 pr-4 font-semibold">${booking.totalPrice.toLocaleString()}</td>
-                              <td className="py-3">
-                                <Badge variant={statusVariant(booking.status)} className="capitalize">{booking.status}</Badge>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                <CardContent className="p-6 space-y-6">
+                  {/* Add New Coupon Form */}
+                  <div className="bg-muted/30 p-6 rounded-lg border-2 border-dashed border-primary/20">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Plus className="w-5 h-5" />
+                      Create New Coupon
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="coupon-code">Coupon Code *</Label>
+                        <Input
+                          id="coupon-code"
+                          placeholder="e.g., SAVE100"
+                          value={newCoupon.code}
+                          onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })}
+                          className="uppercase font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="discount-type">Discount Type *</Label>
+                        <Select
+                          value={newCoupon.discountType}
+                          onValueChange={(value: "fixed" | "percentage") => 
+                            setNewCoupon({ ...newCoupon, discountType: value })
+                          }
+                        >
+                          <SelectTrigger id="discount-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fixed">Fixed Amount (₹)</SelectItem>
+                            <SelectItem value="percentage">Percentage (%)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="discount-amount">
+                          Discount {newCoupon.discountType === "fixed" ? "(₹)" : "(%)"} *
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="discount-amount"
+                            type="number"
+                            placeholder={newCoupon.discountType === "fixed" ? "500" : "10"}
+                            value={newCoupon.discount}
+                            onChange={(e) => setNewCoupon({ ...newCoupon, discount: e.target.value })}
+                            className="pr-8"
+                            min="0"
+                            max={newCoupon.discountType === "percentage" ? "100" : undefined}
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            {newCoupon.discountType === "fixed" ? (
+                              <IndianRupee className="w-4 h-4" />
+                            ) : (
+                              <Percent className="w-4 h-4" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="valid-until">Valid Until *</Label>
+                        <div className="relative">
+                          <Input
+                            id="valid-until"
+                            type="date"
+                            value={newCoupon.validUntil}
+                            onChange={(e) => setNewCoupon({ ...newCoupon, validUntil: e.target.value })}
+                            min={new Date().toISOString().split('T')[0]}
+                          />
+                          <Calendar className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                        </div>
+                      </div>
+
+                      <div className="flex items-end">
+                        <Button 
+                          onClick={handleAddCoupon} 
+                          className="w-full"
+                          size="lg"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Coupon
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Coupons List */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Tag className="w-5 h-5" />
+                      Active Coupons ({coupons.length})
+                    </h3>
+
+                    {coupons.length === 0 ? (
+                      <div className="text-center py-12 bg-muted/20 rounded-lg border-2 border-dashed">
+                        <Tag className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-muted-foreground text-lg font-medium">No coupons created yet</p>
+                        <p className="text-sm text-muted-foreground mt-1">Create your first coupon to offer discounts to customers</p>
+                      </div>
                     ) : (
-                      <p className="text-center text-muted-foreground py-8">No {section} bookings yet.</p>
-                    );
-                  })()}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {coupons.map((coupon) => {
+                          const expired = isCouponExpired(coupon.validUntil);
+                          return (
+                            <Card 
+                              key={coupon.code} 
+                              className={cn(
+                                "relative overflow-hidden transition-all hover:shadow-lg",
+                                expired && "opacity-60"
+                              )}
+                            >
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16" />
+                              <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full -ml-12 -mb-12" />
+                              
+                              <CardHeader className="pb-3">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Badge 
+                                        variant={expired ? "secondary" : "default"}
+                                        className="font-mono text-lg px-3 py-1"
+                                      >
+                                        {coupon.code}
+                                      </Badge>
+                                      {expired && (
+                                        <Badge variant="destructive" className="text-xs">
+                                          Expired
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-2xl font-bold text-primary">
+                                      {coupon.discountType === "fixed" ? (
+                                        <>
+                                          <IndianRupee className="w-5 h-5" />
+                                          {coupon.discount.toFixed(0)}
+                                        </>
+                                      ) : (
+                                        <>
+                                          {coupon.discount}
+                                          <Percent className="w-5 h-5" />
+                                        </>
+                                      )}
+                                      <span className="text-sm text-muted-foreground font-normal">
+                                        OFF
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteCoupon(coupon.code)}
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>
+                                    Expires: {new Date(coupon.validUntil).toLocaleDateString('en-IN', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                                {expired && (
+                                  <div className="mt-2 flex items-center gap-1 text-xs text-destructive">
+                                    <XCircle className="w-3 h-3" />
+                                    <span>This coupon has expired</span>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
-            )}
 
-            {section === "coupons" && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader><CardTitle>Add Coupon Code</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Input
-                        placeholder="Coupon code (e.g. SAVE100)"
-                        value={newCouponCode}
-                        onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
-                        className="font-mono uppercase"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Discount amount ($)"
-                        value={newCouponDiscount}
-                        onChange={(e) => setNewCouponDiscount(e.target.value)}
-                        className="sm:max-w-[180px]"
-                      />
-                      <Button onClick={addCoupon} className="shrink-0">Add Coupon</Button>
+              {/* Delete Confirmation Dialog */}
+              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Coupon</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete coupon <strong className="font-mono">{couponToDelete}</strong>? 
+                      This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={confirmDeleteCoupon}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Coupon
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </TabsContent>
+
+            {/* Packages Tab */}
+            <TabsContent value="packages">
+              <Card>
+                <CardHeader className="bg-primary text-primary-foreground">
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    Manage Holiday Packages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <p className="text-muted-foreground">
+                      Create and manage holiday packages for your customers
+                    </p>
+                    <Button onClick={() => setShowPackageDialog(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add New Package
+                    </Button>
+                  </div>
+
+                  {packages.length === 0 ? (
+                    <div className="text-center py-12 bg-muted/20 rounded-lg border-2 border-dashed">
+                      <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground text-lg font-medium">No packages created yet</p>
+                      <p className="text-sm text-muted-foreground mt-1 mb-4">Create your first holiday package</p>
+                      <Button onClick={() => setShowPackageDialog(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add New Package
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {packages.map((pkg) => (
+                        <Card key={pkg.id} className="hover:shadow-lg transition-all">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <CardTitle className="text-lg mb-1">{pkg.name}</CardTitle>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Map className="w-4 h-4" />
+                                  <span>{pkg.destination}</span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeletePackage(pkg.id)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                              {pkg.description}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1 text-sm">
+                                <Clock className="w-4 h-4 text-muted-foreground" />
+                                <span>{pkg.duration}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-lg font-bold text-primary">
+                                <IndianRupee className="w-5 h-5" />
+                                <span>{pkg.price.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-                <Card>
-                  <CardHeader><CardTitle>Active Coupons</CardTitle></CardHeader>
-                  <CardContent>
-                    {coupons.length === 0 ? (
-                      <p className="text-center text-muted-foreground py-6">No coupons yet. Add one above.</p>
-                    ) : (
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b text-muted-foreground">
-                            <th className="text-left py-3 pr-4 font-semibold">Code</th>
-                            <th className="text-left py-3 pr-4 font-semibold">Discount</th>
-                            <th className="text-left py-3 font-semibold">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {coupons.map((coupon) => (
-                            <tr key={coupon.code} className="border-b last:border-0">
-                              <td className="py-3 pr-4">
-                                <span className="font-mono font-bold bg-primary/10 text-primary px-2 py-1 rounded text-xs">{coupon.code}</span>
-                              </td>
-                              <td className="py-3 pr-4 font-semibold text-green-600">-${coupon.discount}</td>
-                              <td className="py-3">
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => deleteCoupon(coupon.code)}
-                                >
-                                  Delete
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        </main>
+              {/* Add Package Dialog */}
+              <Dialog open={showPackageDialog} onOpenChange={setShowPackageDialog}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Add New Holiday Package</DialogTitle>
+                    <DialogDescription>
+                      Create a new holiday package with all the details
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pkg-name">Package Name *</Label>
+                      <Input
+                        id="pkg-name"
+                        placeholder="e.g., Goa Beach Paradise"
+                        value={newPackage.name}
+                        onChange={(e) => setNewPackage({ ...newPackage, name: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pkg-destination">Destination *</Label>
+                      <Input
+                        id="pkg-destination"
+                        placeholder="e.g., Goa, India"
+                        value={newPackage.destination}
+                        onChange={(e) => setNewPackage({ ...newPackage, destination: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="pkg-price">Price (₹) *</Label>
+                        <div className="relative">
+                          <Input
+                            id="pkg-price"
+                            type="number"
+                            placeholder="15000"
+                            value={newPackage.price}
+                            onChange={(e) => setNewPackage({ ...newPackage, price: e.target.value })}
+                            className="pr-8"
+                            min="0"
+                          />
+                          <IndianRupee className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="pkg-duration">Duration *</Label>
+                        <Input
+                          id="pkg-duration"
+                          placeholder="e.g., 5 Days 4 Nights"
+                          value={newPackage.duration}
+                          onChange={(e) => setNewPackage({ ...newPackage, duration: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pkg-description">Description *</Label>
+                      <Textarea
+                        id="pkg-description"
+                        placeholder="Enter package description, highlights, and inclusions..."
+                        value={newPackage.description}
+                        onChange={(e) => setNewPackage({ ...newPackage, description: e.target.value })}
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowPackageDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddPackage}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Package
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {/* Delete Package Confirmation Dialog */}
+              <Dialog open={showDeletePackageDialog} onOpenChange={setShowDeletePackageDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Package</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete this package? This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowDeletePackageDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={confirmDeletePackage}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Package
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </TabsContent>
+
+            {/* Users Tab */}
+            <TabsContent value="users">
+              <Card>
+                <CardHeader className="bg-primary text-primary-foreground">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    User Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-muted-foreground text-center py-8">User management features coming soon...</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </Layout>
   );
