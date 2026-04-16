@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "t7UDdkYsZ6IrgD3jZWvGc"
+uri = "file://artifacts/travel-booking/public/images/hero.png"
+type = "image"
+title = "Ocean sunset hero banner"
+
+[[generated]]
+id = "t5HcrYKzxZvm-9PUZGKNX"
+uri = "file://artifacts/travel-booking/public/images/dest-mountain.png"
+type = "image"
+title = "Mountain adventure poster"
+
+[[generated]]
+id = "VqTOZZCLkZAXFAkS6kGoN"
+uri = "file://artifacts/travel-booking/public/images/dest-beach.png"
+type = "image"
+title = "Tropical beach poster"
+
+[[generated]]
+id = "j3StSwBVtOLjQJpvpgiMH"
+uri = "file://artifacts/travel-booking/public/images/dest-city.png"
+type = "image"
+title = "Tokyo city street poster"

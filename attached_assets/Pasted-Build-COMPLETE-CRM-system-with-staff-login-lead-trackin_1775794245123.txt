@@ -1,0 +1,144 @@
+Build COMPLETE CRM system with staff login, lead tracking, and assignment.
+
+========================
+1. USER ROLES
+========================
+
+Roles:
+
+- admin
+- agent
+- staff
+- customer
+
+========================
+2. LEADS SYSTEM
+========================
+
+Create leads table:
+
+- id
+- name
+- phone
+- user_id (optional)
+- type ("flight" / "holiday")
+- source ("auto" / "form" / "custom")
+- status ("new" / "contacted" / "interested" / "booked" / "lost")
+- assigned_to (staff_id)
+- notes
+- created_at
+
+========================
+3. LEAD COLLECTION
+========================
+
+Capture leads from:
+
+- Flight (before payment)
+- Holiday search (auto lead if logged in)
+- Holiday enquiry form
+- Customize package request
+
+========================
+4. ADMIN CRM DASHBOARD
+========================
+
+Page: /admin/crm
+
+Show:
+
+- Name
+- Phone
+- Type
+- Source
+- Status
+- Assigned Staff
+- Date
+
+========================
+5. LEAD ACTIONS
+========================
+
+- Call button
+- WhatsApp button
+- Change status
+- Add notes
+- Assign to staff
+
+========================
+6. STAFF MANAGEMENT (ADMIN)
+========================
+
+Add section:
+
+"Staff Management"
+
+- Add staff:
+  - Name
+  - Phone
+  - Email
+  - Password
+
+Save with role = "staff"
+
+========================
+7. STAFF LOGIN
+========================
+
+Page:
+
+/staff-login
+
+Allow only role = staff
+
+========================
+8. STAFF DASHBOARD
+========================
+
+Page: /staff
+
+Show ONLY assigned leads
+
+Fields:
+
+- Name
+- Phone
+- Type
+- Status
+
+========================
+9. STAFF ACTIONS
+========================
+
+- Call
+- WhatsApp
+- Update status
+- Add notes
+
+========================
+10. AUTO ASSIGN
+========================
+
+When new lead comes:
+
+Assign to staff automatically (random or first available)
+
+========================
+11. PERMISSIONS
+========================
+
+Staff:
+
+✔ See only their leads  
+❌ Cannot access admin  
+❌ Cannot see all leads  
+
+========================
+12. UI
+========================
+
+- Clean table
+- Status colors:
+
+New → Blue  
+Contacted →

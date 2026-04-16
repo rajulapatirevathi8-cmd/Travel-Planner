@@ -1,0 +1,44 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import authRouter from "./auth";
+import flightsRouter from "./flights";
+import busesRouter from "./buses";
+import hotelsRouter from "./hotels";
+import packagesRouter from "./packages";
+import bookingsRouter from "./bookings";
+import paymentsRouter from "./payments";
+import ticketsRouter        from "./tickets";
+import whatsappRouter       from "./whatsapp";
+import itineraryPdfRouter    from "./itinerary-pdf";
+import holidayWhatsappRouter  from "./holiday-whatsapp";
+import followupRouter         from "./followup";
+import leadsRouter            from "./leads";
+import holidayPackagesRouter  from "./holiday-packages";
+import enquiriesRouter        from "./enquiries";
+import pushRouter             from "./push";
+import currencyRouter         from "./currency";
+import marketingRouter        from "./marketing";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(authRouter);
+router.use(flightsRouter);
+router.use(busesRouter);
+router.use(hotelsRouter);
+router.use(packagesRouter);
+router.use(bookingsRouter);
+router.use("/payments",          paymentsRouter);
+router.use("/tickets",           ticketsRouter);
+router.use("/send-whatsapp",     whatsappRouter);
+router.use("/itinerary-pdf",     itineraryPdfRouter);
+router.use("/holiday-whatsapp",  holidayWhatsappRouter);
+router.use("/followup",          followupRouter);
+router.use(leadsRouter);
+router.use(holidayPackagesRouter);
+router.use(enquiriesRouter);
+router.use(pushRouter);
+router.use(currencyRouter);
+router.use(marketingRouter);
+
+export default router;

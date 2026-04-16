@@ -1,0 +1,100 @@
+Fix and upgrade Bus module to behave like real bus booking (RedBus style).
+
+1. REMOVE AIRPORT LOGIC:
+- Replace airport codes with city names
+- Use: fromCity, toCity (strings)
+- Remove any flight-related fields like airport codes
+
+2. BUS SEARCH:
+- Fields:
+  From City
+  To City
+  Travel Date
+- Pass data to results page
+
+3. BUS RESULTS DATA UPDATE:
+Use structured data like:
+
+{
+  id: 1,
+  name: "Orange Travels",
+  from: "Hyderabad",
+  to: "Vijayawada",
+  departure: "10:00 PM",
+  arrival: "5:00 AM",
+  duration: "7h",
+  price: 1200,
+  boardingPoints: ["Ameerpet", "Kukatpally"],
+  droppingPoints: ["Benz Circle", "Gannavaram"],
+  seatsAvailable: 20
+}
+
+4. RESULTS UI:
+- Show:
+  Bus name
+  Departure / Arrival
+  Duration
+  Seats available
+  Price (base + markup only)
+- Add "Select Seat" button
+
+5. SEAT SELECTION:
+- Create seat layout (basic grid 4x5 or 5x5)
+- Allow selecting 1 or multiple seats
+- Highlight selected seats
+- Store selectedSeats in state
+
+6. BOARDING & DROPPING:
+- Add dropdowns in booking page:
+  Boarding Point (select)
+  Dropping Point (select)
+
+7. BOOKING PAGE:
+- Show:
+  Bus details
+  Selected seats
+  Boarding / Dropping
+  Passenger details
+
+- Pricing:
+  priceWithMarkup = base + markup
+  DO NOT add markup again
+
+8. CONVENIENCE FEE RULE:
+- Do NOT show in search/results
+- Do NOT show in booking page
+- Add ONLY in final payment step
+
+9. FINAL PAYMENT:
+- finalPrice = priceWithMarkup + convenienceFee
+- Show:
+  Base Fare
+  Convenience Fee
+  Total
+
+10. SAVE BOOKING:
+- Save:
+  type: "bus"
+  from
+  to
+  bus_name
+  seats
+  boarding_point
+  dropping_point
+  base_price
+  markup
+  convenience_fee
+  total_price
+
+11. LIVE TRACKING:
+- Do NOT implement real tracking
+- Show static message:
+  "Live tracking available after API integration"
+
+12. IMPORTANT:
+- Prevent double markup
+- Use same pricing across pages
+- Reuse existing coupon + payment logic
+
+Goal:
+Bus module should look and behave like RedBus basic version (without API).

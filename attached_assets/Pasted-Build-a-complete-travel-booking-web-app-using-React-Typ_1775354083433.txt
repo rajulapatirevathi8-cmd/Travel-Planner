@@ -1,0 +1,104 @@
+Build a complete travel booking web app using React + TypeScript.
+
+Features required:
+
+========================
+1. ADMIN PANEL (admin.tsx)
+========================
+- Sidebar with:
+  Dashboard, Flights, Hotels, Bus, Holidays, Coupons
+
+- Dashboard:
+  - Total bookings
+  - Total earnings
+  - Simple booking stats
+
+- Markup system:
+  - Input field to set markup value
+  - Save markup in localStorage ("markup")
+  - Load markup on page load
+
+- Coupon system:
+  - Create coupon code (e.g. SAVE100)
+  - Save in localStorage ("coupons")
+  - Show coupon list
+
+========================
+2. BOOKING FORM (booking-form.tsx)
+========================
+- Fields:
+  Name, Phone, Email
+
+- Coupon input:
+  - Enter coupon code
+  - Apply button
+
+- Coupon logic:
+  - Read from localStorage
+  - If valid → apply discount
+  - If invalid → show alert
+
+- Price calculation:
+  basePrice = 500
+  markup = localStorage value
+  discount = coupon
+
+  finalPrice = basePrice + markup - discount
+
+- Show final price dynamically
+
+========================
+3. PAYMENT (RAZORPAY)
+========================
+- Add Razorpay script in index.html
+
+- Create handlePayment function:
+  - Use Razorpay options
+  - amount = finalPrice * 100
+  - key = "rzp_test_xxxxx"
+
+- Replace "Confirm Booking" button with:
+  Pay Now button
+
+- On success:
+  - Show "Payment Successful"
+
+========================
+4. BOOKING SAVE
+========================
+- After payment success:
+  - Save booking data in localStorage ("bookings")
+  - Include:
+    name, phone, email, finalPrice
+
+========================
+5. ADMIN BOOKING VIEW
+========================
+- Show all bookings in admin panel
+- Display:
+  Name, Price
+
+========================
+6. UI DESIGN
+========================
+- Use Tailwind CSS
+- Sidebar layout
+- Dashboard cards
+- Clean UI
+
+========================
+7. FIX ALL ERRORS
+========================
+- No TypeScript errors
+- No JSX errors
+- No unused variables
+- Proper structure
+
+========================
+
+Give me FULL working code for:
+- admin.tsx
+- booking-form.tsx
+- any required updates
+
+Keep code simple and beginner-friendly.

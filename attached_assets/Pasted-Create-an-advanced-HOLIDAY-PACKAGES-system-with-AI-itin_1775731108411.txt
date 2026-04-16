@@ -1,0 +1,150 @@
+Create an advanced HOLIDAY PACKAGES system with AI itinerary generation, lead capture, enquiry flow, and booking option.
+
+1. HOLIDAY SEARCH (LEAD GENERATION FIRST):
+
+- Add search input:
+   "Where do you want to go?"
+
+- When user searches (example: Goa, Kashmir):
+   DO NOT directly show booking
+
+- Show a LEAD FORM first:
+   - Name
+   - Mobile Number
+   - Travel Date (optional)
+   - Number of People
+
+- Save lead in database:
+   table: holiday_leads
+
+2. AI ITINERARY GENERATION (ADMIN + USER VIEW):
+
+- Generate itinerary dynamically based on location
+
+Example:
+If user searches "Goa":
+
+Generate:
+Day 1: Arrival + Beach + Dinner  
+Day 2: North Goa tour  
+Day 3: South Goa + Shopping  
+Day 4: Checkout  
+
+- Show:
+   - Day-wise plan
+   - Highlights
+   - Attractions
+   - Travel tips
+
+- Admin panel:
+   Add button:
+   "Generate AI Itinerary"
+
+- Allow admin to:
+   Edit itinerary
+   Save itinerary
+
+3. HOLIDAY PACKAGES PAGE:
+
+- Show:
+   Image
+   Destination name
+   Duration (3D/2N)
+   Price per person
+   Short description
+
+4. PACKAGE DETAILS PAGE:
+
+- Show:
+   Full itinerary (AI generated)
+   Inclusions:
+     - Hotel
+     - Transport
+     - Sightseeing
+   Exclusions:
+     - Flights
+     - Personal expenses
+
+- Show images gallery
+
+5. PRICING:
+
+base = pricePerPerson * numberOfPeople  
+priceWithMarkup = base + markup  
+
+6. ENQUIRY SYSTEM (VERY IMPORTANT):
+
+- Add button:
+   "Send Enquiry"
+
+- When clicked:
+   Save:
+   - Name
+   - Phone
+   - Package
+   - People count
+
+- Status:
+   "Pending / Contacted / Converted"
+
+7. BOOK NOW OPTION:
+
+- Also add:
+   "Book Now" button
+
+- Flow:
+   Booking → Payment → Confirmation
+
+8. PAYMENT:
+
+- Only in final step:
+   finalPrice = priceWithMarkup + convenienceFee
+
+9. ADMIN PANEL (VERY POWERFUL):
+
+Add sections:
+
+A. Leads:
+- View all leads
+- Contact status
+
+B. Enquiries:
+- Track users interested
+
+C. Packages:
+- Create / Edit packages
+- Upload images
+
+D. AI Itinerary:
+- Generate
+- Edit
+- Save
+
+10. DATABASE:
+
+holiday_leads:
+- name
+- phone
+- destination
+- date
+- people
+
+holiday_bookings:
+- type: "holiday"
+- package_name
+- people
+- total_price
+
+11. UX (IMPORTANT):
+
+- First capture lead
+- Then show itinerary
+- Then push enquiry / booking
+
+12. GOAL:
+
+User flow:
+Search → Lead capture → AI itinerary → Enquiry → Booking
+
+System should feel like:
+TravelTriangle + MakeMyTrip hybrid

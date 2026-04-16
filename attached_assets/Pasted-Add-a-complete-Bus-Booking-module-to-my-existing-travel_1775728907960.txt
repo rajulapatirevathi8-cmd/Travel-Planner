@@ -1,0 +1,94 @@
+Add a complete Bus Booking module to my existing travel website (similar to flights module). Follow the same architecture and reuse existing logic where possible.
+
+1. Create new pages/components:
+- BusSearch
+- BusResults
+- BusBooking
+
+2. Bus Search Page:
+- Fields: From City, To City, Travel Date
+- On search, navigate to BusResults with query params
+
+3. Bus Results Page:
+- Use mock data for now:
+  [
+    {
+      id: 1,
+      name: "Orange Travels",
+      from: "Hyderabad",
+      to: "Vijayawada",
+      departure: "10:00 PM",
+      arrival: "5:00 AM",
+      price: 1200
+    },
+    {
+      id: 2,
+      name: "VRL Travels",
+      from: "Hyderabad",
+      to: "Vijayawada",
+      departure: "9:00 PM",
+      arrival: "4:30 AM",
+      price: 1500
+    }
+  ]
+
+- Apply admin bus markup (₹ or %)
+- Show FINAL price (base + markup ONLY)
+- Do NOT show markup separately
+- Show: Bus name, timing, price, Book button
+
+4. Pricing Rules:
+- Search page → show price = base + markup
+- Booking page → DO NOT add markup again
+- Convenience fee should NOT be shown here
+
+5. Bus Booking Page:
+- Show selected bus details
+- Passenger form (name, phone)
+- Coupon apply system (reuse existing coupon logic)
+- Price summary:
+   Base Price
+   + Markup (hidden inside price)
+   - Coupon discount
+   Final Price
+- Add convenience fee ONLY on final payment step
+
+6. Payment Integration:
+- Use existing Razorpay function
+- On success:
+   - Save booking in database
+   - type: "bus"
+   - include user_id / agent_id
+   - include price, discount, final amount
+
+7. Database:
+- Ensure bookings table supports:
+   type = "bus"
+   from, to, bus_name, travel_date
+
+8. My Bookings:
+- Show bus bookings along with flights
+- Add condition: if booking.type === "bus"
+
+9. Admin Panel:
+- Show bus bookings
+- Include in profit calculation:
+   profit = markup + convenience fee
+
+10. Important Fixes:
+- Prevent double markup (apply ONLY once)
+- Do NOT show convenience fee in search/results
+- Show convenience fee only in final payment page
+
+11. UI:
+- Match design with flights module
+- Clean card layout for buses
+- Mobile responsive
+
+12. Routing:
+- /bus → BusSearch
+- /bus/results → BusResults
+- /bus/booking → BusBooking
+
+Ensure everything works end-to-end:
+Search → Results → Booking → Payment → Save → Show in My Bookings + Admin

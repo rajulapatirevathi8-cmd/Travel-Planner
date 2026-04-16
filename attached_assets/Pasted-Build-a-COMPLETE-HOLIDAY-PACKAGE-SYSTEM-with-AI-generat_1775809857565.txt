@@ -1,0 +1,174 @@
+Build a COMPLETE HOLIDAY PACKAGE SYSTEM with AI generation, DB control, admin control, and user-based behavior.
+
+========================
+1. AI PACKAGE GENERATION
+========================
+
+Add button: "Generate with AI"
+
+Input:
+- Destination
+- Days
+
+AI should generate:
+
+- Title
+- Description
+- Day-wise itinerary
+- Inclusions
+- Exclusions
+- AI price
+
+========================
+2. SAVE TO DATABASE (CRITICAL)
+========================
+
+When AI generates:
+
+- Save immediately to DB (packages table)
+- Do NOT keep temporary frontend data
+
+========================
+3. DATABASE AS SOURCE
+========================
+
+- Customer → fetch from DB
+- Agent → fetch from DB
+- Admin → fetch from DB
+
+Remove any direct AI display
+
+========================
+4. PREVENT DUPLICATES
+========================
+
+If same destination exists:
+
+- Do NOT regenerate
+- Fetch from DB
+
+========================
+5. ADMIN PANEL CONTROL
+========================
+
+Admin can:
+
+- View all packages (AI + manual)
+- Edit full details
+- Enable / Disable package
+- Update itinerary, inclusions, exclusions
+
+========================
+6. PRICE SYSTEM (VERY IMPORTANT)
+========================
+
+Fields:
+
+- ai_price
+- admin_price
+- final_price
+
+Logic:
+
+final_price = admin_price (if exists) else ai_price
+
+Customer sees ONLY final_price
+
+========================
+7. CUSTOMER VIEW (CLEAN UI)
+========================
+
+Show:
+
+- Image
+- Name
+- Duration
+- final_price
+- Description
+
+------------------------
+
+ITINERARY (day-wise)
+
+------------------------
+
+INCLUSIONS (✔)
+
+------------------------
+
+EXCLUSIONS (✖)
+
+------------------------
+
+BUTTONS:
+
+- Enquiry
+- Customize Package
+
+========================
+8. USER TYPE LOGIC
+========================
+
+CASE 1: NOT LOGGED
+
+- Show enquiry form
+- Ask name + phone
+- Save lead
+
+------------------------
+
+CASE 2: CUSTOMER LOGGED
+
+- Do NOT show form
+- Auto create lead using account data
+
+------------------------
+
+CASE 3: AGENT LOGGED
+
+- Do NOT create lead
+
+Show:
+
+"Create enquiry for customer"
+
+Save with agent_id
+
+========================
+9. CUSTOMIZE PACKAGE
+========================
+
+Button: "Customize Package"
+
+Form:
+
+- Message (add/remove places)
+
+Save in:
+
+custom_requests:
+- name
+- phone
+- message
+- package_id
+
+========================
+10. ADMIN CRM VIEW
+========================
+
+Show:
+
+- Leads
+- Custom requests
+
+========================
+11. SAFETY RULES
+========================
+
+- Do NOT break existing system
+- Only enhance holiday module
+- Keep booking flow unchanged
+
+========================
+GOAL:
+AI → DB save → Admin control → Customer sees clean package → Leads generated → Agent separate flow

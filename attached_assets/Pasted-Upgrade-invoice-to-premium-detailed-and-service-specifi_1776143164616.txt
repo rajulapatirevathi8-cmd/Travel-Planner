@@ -1,0 +1,155 @@
+Upgrade invoice to premium, detailed, and service-specific format.
+
+========================
+1. DESIGN (PREMIUM UI)
+========================
+
+- Clean card layout
+- Sections with headings
+- Proper spacing
+- Bold titles
+
+Top section:
+
+- Company Logo
+- Company Name
+- "Booking Confirmation"
+
+========================
+2. COMMON DETAILS
+========================
+
+Show in all invoices:
+
+- Booking ID
+- Customer Name
+- Phone
+- Email
+- Booking Date
+- Total Amount
+
+========================
+3. FLIGHT INVOICE
+========================
+
+Show:
+
+✈️ Flight Details
+
+- Airline Name
+- Flight Number
+- From → To
+- Departure Time
+- Arrival Time
+- Duration
+- Passenger Names
+
+Optional:
+- Seat (if available)
+- Baggage
+
+========================
+4. BUS INVOICE
+========================
+
+Show:
+
+🚌 Bus Details
+
+- Operator Name
+- Bus Type (AC Sleeper / Seater)
+- Route (From → To)
+- Travel Date
+
+Boarding:
+- Boarding Point
+- Boarding Time
+
+Dropping:
+- Dropping Point
+- Dropping Time
+
+- Seat Numbers
+- Passenger Count
+
+========================
+5. HOTEL INVOICE
+========================
+
+Show:
+
+🏨 Hotel Details
+
+- Hotel Name
+- Location (City)
+- Address (if available)
+
+Stay Details:
+- Check-in Date & Time
+- Check-out Date & Time
+- Number of Nights
+
+Room Details:
+- Rooms count
+- Guests (Adults + Children)
+
+========================
+6. CANCELLATION POLICY
+========================
+
+IMPORTANT:
+
+- Fetch from API response
+
+IF available:
+Show full policy clearly
+
+Example:
+"Free cancellation before 24 hrs.
+After that ₹1000 charge."
+
+IF not available:
+Show:
+"As per provider policy"
+
+========================
+7. PRICE BREAKDOWN
+========================
+
+Show:
+
+- Base Fare
+- Markup (hidden internally optional)
+- Convenience Fee
+- Total Paid
+
+========================
+8. FORMATTING
+========================
+
+Example:
+
+Boarding: Miyapur – 10:30 PM  
+Dropping: Vijayawada – 5:00 AM  
+
+Check-in: 20 Apr 2026 – 2:00 PM  
+Check-out: 22 Apr 2026 – 11:00 AM  
+
+========================
+9. PDF FORMAT
+========================
+
+- Mobile friendly
+- No overflow
+- Proper alignment
+
+========================
+GOAL
+========================
+
+Invoice must look like real travel ticket:
+
+- Clear
+- Detailed
+- Professional
+- Easy to understand

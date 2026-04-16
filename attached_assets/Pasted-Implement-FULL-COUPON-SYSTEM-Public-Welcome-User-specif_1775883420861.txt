@@ -1,0 +1,120 @@
+Implement FULL COUPON SYSTEM (Public + Welcome + User-specific)
+
+========================
+1. COUPON MODEL UPDATE
+========================
+
+Fields:
+
+- code (string)
+- discount (number)
+- type ("public" | "welcome" | "user_specific")
+- allowed_phone (optional)
+- is_one_time (boolean)
+- used_by (array of phone numbers)
+- expiry_date (optional)
+- is_active (boolean)
+
+========================
+2. COUPON TYPES LOGIC
+========================
+
+A) PUBLIC COUPONS:
+- Anyone can use
+- Example: SUMMER50
+
+B) WELCOME COUPON:
+- Only first booking
+- Check user bookings count == 0
+
+C) USER-SPECIFIC COUPON:
+- allowed_phone must match user phone
+- Others should not use
+
+========================
+3. APPLY COUPON LOGIC
+========================
+
+When user applies:
+
+Step 1: Check active coupon
+Step 2: Check expiry
+
+Step 3: If type == user_specific:
+    allow only if phone matches
+
+Step 4: If type == welcome:
+    allow only if user has 0 bookings
+
+Step 5: If is_one_time:
+    if user.phone in used_by:
+        return "Coupon already used"
+
+Step 6: Apply discount
+
+Step 7: If is_one_time:
+    add user.phone to used_by
+
+========================
+4. SHOW COUPONS TO USER
+========================
+
+Create API /coupons/available
+
+Logic:
+
+- Show public coupons
+- Show welcome coupon (only if eligible)
+- Show user-specific coupon (if phone matches)
+
+Return list of coupons
+
+========================
+5. UI (IMPORTANT)
+========================
+
+On checkout page:
+
+- Show "Available Offers"
+- List coupons as cards:
+
+Example:
+"FLAT ₹100 OFF"
+Code: SAVE100
+[Apply]
+
+- On click → auto apply coupon
+
+========================
+6. ADMIN PANEL
+========================
+
+Add:
+
+- Create coupon
+- Select type:
+    public / welcome / user_specific
+- If user_specific → enter phone number
+- Set one-time usage toggle
+
+========================
+7. SEND TO CUSTOMER
+========================
+
+When admin creates user-specific coupon:
+
+Option:
+
+- Send via WhatsApp / SMS
+
+Message:
+
+"Hi, you got a special ₹100 coupon. It will be auto applied on your next booking."
+
+========================
+GOAL:
+- Public coupons for all
+- Welcome coupon first-time only
+- Special coupons for specific users
+- Coupons visible in UI
+- One-time usage control

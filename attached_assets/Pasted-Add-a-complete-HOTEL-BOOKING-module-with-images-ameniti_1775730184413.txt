@@ -1,0 +1,198 @@
+Add a complete HOTEL BOOKING module with images, amenities, rooms, pricing, and booking flow.
+
+1. CREATE PAGES:
+- HotelSearch
+- HotelResults
+- HotelDetails
+- HotelBooking
+
+ROUTES:
+- /hotels
+- /hotels/results
+- /hotels/details
+- /hotels/booking
+
+---
+
+2. HOTEL SEARCH PAGE:
+Fields:
+- City
+- Check-in date
+- Check-out date
+- Guests
+
+On search → navigate to results page
+
+---
+
+3. HOTEL RESULTS (USE MOCK DATA):
+
+Create hotel data:
+
+[
+  {
+    id: 1,
+    name: "Grand Palace Hotel",
+    city: "Hyderabad",
+    rating: 4.5,
+    pricePerNight: 2500,
+    amenities: ["AC", "WiFi", "Parking", "TV"],
+    images: [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa"
+    ]
+  },
+  {
+    id: 2,
+    name: "Sea View Resort",
+    city: "Goa",
+    rating: 4.2,
+    pricePerNight: 3000,
+    amenities: ["AC", "WiFi", "Pool", "Restaurant"],
+    images: [
+      "https://images.unsplash.com/photo-1501117716987-c8e1ecb2108f",
+      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb"
+    ]
+  }
+]
+
+---
+
+4. RESULTS UI:
+
+Show:
+- Hotel image (first image)
+- Name
+- City
+- Rating ⭐
+- Price per night
+
+Amenities preview:
+- Show first 3 (ex: AC, WiFi, Parking)
+- Show "+ more"
+
+Apply markup:
+priceWithMarkup = pricePerNight + markup
+
+DO NOT show markup separately
+
+---
+
+5. HOTEL DETAILS PAGE:
+
+Show:
+- All images (gallery)
+- All amenities
+- Hotel details
+
+ROOM TYPES:
+
+rooms = [
+  {
+    type: "Standard",
+    price: 2000,
+    amenities: ["Non-AC", "WiFi"]
+  },
+  {
+    type: "Deluxe",
+    price: 3000,
+    amenities: ["AC", "WiFi", "TV"]
+  }
+]
+
+Allow user to select room
+
+---
+
+6. BOOKING PAGE:
+
+Show:
+- Hotel name
+- Room type
+- Check-in / Check-out
+- Nights calculation:
+
+nights = difference between dates
+
+Pricing:
+
+base = roomPrice * nights
+priceWithMarkup = base + markup
+
+DO NOT add markup again
+
+Coupon:
+- Apply existing coupon system
+
+---
+
+7. PAYMENT PAGE:
+
+Add ONLY here:
+
+finalPrice = priceWithMarkup + convenienceFee
+
+Show:
+- Base Price
+- Convenience Fee
+- Total
+
+---
+
+8. SAVE BOOKING:
+
+Save in DB:
+
+{
+  type: "hotel",
+  hotel_name,
+  city,
+  checkin,
+  checkout,
+  nights,
+  room_type,
+  base_price,
+  markup,
+  convenience_fee,
+  total_price
+}
+
+---
+
+9. MY BOOKINGS:
+
+- Show hotel bookings
+- if booking.type === "hotel"
+
+---
+
+10. ADMIN PANEL:
+
+- Show hotel bookings
+- Include in profit calculation
+
+profit = markup + convenience_fee
+
+---
+
+11. IMPORTANT RULES:
+
+- Do NOT show convenience fee in search/results/booking
+- Show fee ONLY in payment page
+- Prevent double markup
+- Keep markup hidden from UI
+
+---
+
+12. UI:
+
+- Clean cards (like MakeMyTrip)
+- Responsive design
+- Show images properly
+- Add fallback image if broken
+
+---
+
+GOAL:
+Full hotel booking flow:
+Search → Results → Details → Booking → Payment → Save → Show in My Bookings + Admin

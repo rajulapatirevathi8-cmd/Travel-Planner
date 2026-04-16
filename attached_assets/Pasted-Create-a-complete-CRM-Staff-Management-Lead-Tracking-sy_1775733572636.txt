@@ -1,0 +1,159 @@
+Create a complete CRM + Staff Management + Lead Tracking system for the travel app.
+
+========================
+1. LEAD TRACKING (IMPORTANT)
+========================
+
+Track users who enter details but do NOT complete payment.
+
+Trigger:
+- When user enters:
+   name + phone
+   AND reaches payment page
+   BUT does NOT complete booking
+
+Save in DB:
+
+leads:
+- id
+- name
+- phone
+- type ("flight")
+- status ("abandoned")
+- created_at
+
+========================
+2. CRM DASHBOARD (ADMIN)
+========================
+
+Create page: /admin/crm
+
+Show:
+
+- All leads
+- Columns:
+   Name
+   Phone
+   Type (flight/holiday)
+   Status (new/contacted/booked)
+   Assigned Staff
+   Created time
+
+Add filters:
+- New
+- Contacted
+- Booked
+
+Add actions:
+- Call button
+- WhatsApp button
+- Change status
+- Assign to staff
+
+========================
+3. STAFF SYSTEM
+========================
+
+Create new role: "staff"
+
+User model update:
+- role: "admin" | "agent" | "staff" | "user"
+
+Staff login:
+- Separate dashboard
+
+========================
+4. STAFF DASHBOARD
+========================
+
+Show:
+
+- Assigned leads only
+
+Columns:
+- Name
+- Phone
+- Type
+- Status
+
+Actions:
+- Call
+- WhatsApp
+- Update status
+
+========================
+5. LEAD ASSIGNMENT
+========================
+
+Admin can assign lead to staff:
+
+Add field:
+assigned_to (staff_id)
+
+========================
+6. HOLIDAY LEADS (ALREADY EXIST)
+========================
+
+Combine both:
+
+- Flight abandoned leads
+- Holiday enquiry leads
+
+Show in same CRM
+
+========================
+7. STATUS SYSTEM
+========================
+
+Statuses:
+
+- New
+- Contacted
+- Interested
+- Booked
+- Lost
+
+Only "New" leads show first
+
+========================
+8. AUTO SAVE LEAD
+========================
+
+When user enters:
+
+- Name
+- Phone
+
+Save lead immediately (before payment)
+
+========================
+9. BOOKING CONVERSION
+========================
+
+If booking completed:
+
+- Update lead status → "Booked"
+
+========================
+10. UI
+========================
+
+Admin CRM:
+- Table view
+- Clean layout
+- Status badges (color)
+
+Staff dashboard:
+- Simple list
+- Mobile friendly
+
+========================
+11. GOAL
+========================
+
+System should:
+
+- Capture every lead
+- Track abandoned bookings
+- Assign to staff
+- Convert leads to bookings

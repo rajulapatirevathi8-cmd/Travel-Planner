@@ -1,0 +1,168 @@
+Stabilize and fix the travel booking app WITHOUT breaking existing working features.
+
+========================
+1. FLIGHTS (CRITICAL FIX)
+========================
+
+- KEEP airport codes (HYD, DEL, BOM etc)
+- DO NOT remove airport codes
+
+- Fix search result mapping:
+  Ensure results match selected from/to
+
+Example:
+Filter flights using:
+
+filteredFlights = flights.filter(
+  f => f.from === selectedFrom && f.to === selectedTo
+)
+
+- Expand airport list:
+
+Include:
+HYD, DEL, BOM, BLR, MAA, CCU, DXB, SIN
+
+- Add both domestic + international support
+
+- Fix issue:
+  Wrong routes (DEL→MUM instead of HYD→VGA)
+
+========================
+2. BUS (SEPARATE FROM FLIGHTS)
+========================
+
+- REMOVE airport codes completely
+- Use ONLY city names:
+
+Hyderabad, Vijayawada, Bangalore, Chennai, Guntur, Vizag
+
+- Replace any airport dataset with city dataset
+
+- Improve seat system:
+
+  Add seat structure:
+  {
+    number: 1,
+    gender: "female" | "male" | null
+  }
+
+- UI:
+  Female seat = pink color
+
+- Prevent:
+  Male booking next to female (basic rule)
+
+========================
+3. HOTELS FIX
+========================
+
+- Expand city list:
+
+Hyderabad, Goa, Delhi, Mumbai, Bangalore, Chennai, Jaipur, Manali
+
+- Ensure search works for all cities
+
+========================
+4. HOLIDAYS IMPROVE
+========================
+
+- Replace weak AI with structured itinerary
+
+Example:
+
+Goa:
+Day 1: Arrival + Beach
+Day 2: North Goa tour
+Day 3: South Goa + Shopping
+
+Kashmir:
+Day 1: Srinagar
+Day 2: Gulmarg
+Day 3: Pahalgam
+
+- Keep enquiry + booking
+
+========================
+5. AGENT SYSTEM FIX
+========================
+
+- Separate signup:
+
+/signup → normal user  
+/agent-signup → agent  
+
+- Fix login:
+
+If role = agent:
+redirect to /agent-dashboard
+
+- Ensure:
+agent_id saved in booking (already working, keep it)
+
+========================
+6. WALLET UI FIX
+========================
+
+- In agent dashboard show:
+
+Wallet Balance: ₹{wallet_balance || 0}
+
+- Add:
+Add Money button
+
+- DO NOT change backend logic
+
+========================
+7. CRM BASIC IMPLEMENTATION
+========================
+
+- Save lead when:
+
+User enters name + phone in flight booking BEFORE payment
+
+- Save:
+
+{
+  name,
+  phone,
+  type: "flight"
+}
+
+- Also save holiday leads
+
+- Do NOT implement full CRM logic yet
+(only save leads)
+
+========================
+8. ADMIN ROUTE FIX
+========================
+
+Fix routing:
+
+/master-admin → redirect to /master-admin/login
+
+========================
+9. UI IMPROVEMENTS
+========================
+
+- Improve menu:
+
+Add icons + labels:
+
+Flights ✈️  
+Bus 🚌  
+Hotels 🏨  
+Holidays 🌴  
+
+========================
+10. SAFETY RULES
+========================
+
+- DO NOT break existing booking flow
+- DO NOT modify payment logic
+- DO NOT remove working features
+- Only fix incorrect logic
+
+========================
+GOAL:
+Fix current bugs, improve data accuracy, and make system ready for final testing.

@@ -1,0 +1,168 @@
+Implement complete AGENT + WALLET SYSTEM in the travel booking app.
+
+========================
+1. USER / AGENT SYSTEM
+========================
+
+- Update user model:
+  id
+  name
+  email
+  phone
+  password
+  role ("user" or "agent")
+  wallet_balance (default 0)
+
+- Ensure login stores:
+  localStorage.setItem("user", JSON.stringify(user))
+
+- Use:
+  const currentUser = JSON.parse(localStorage.getItem("user"))
+
+========================
+2. AGENT PRICING
+========================
+
+- Apply different markup:
+
+let markup = adminMarkup;
+
+if (currentUser?.role === "agent") {
+  markup = agentMarkup;
+}
+
+- Do NOT show markup separately
+
+========================
+3. SAVE AGENT ID IN BOOKINGS
+========================
+
+- When booking is created:
+
+agent_id: currentUser?.role === "agent" ? currentUser.id : null
+
+========================
+4. WALLET SYSTEM
+========================
+
+Add wallet functionality ONLY for agents.
+
+------------------------
+A. ADD MONEY (TOP-UP)
+------------------------
+
+- Create button: "Add Money"
+
+- Input: amount
+
+- On click → open Razorpay
+
+- On success:
+
+user.wallet_balance += amount
+
+Save transaction:
+{
+  user_id,
+  type: "credit",
+  amount,
+  note: "Wallet top-up"
+}
+
+------------------------
+B. PAY USING WALLET
+------------------------
+
+- Add option in payment page:
+
+"Pay with Wallet"
+
+- Logic:
+
+if (user.wallet_balance < finalPrice) {
+  show error "Insufficient balance"
+}
+
+- If sufficient:
+
+user.wallet_balance -= finalPrice
+
+Save transaction:
+{
+  user_id,
+  type: "debit",
+  amount: finalPrice,
+  note: "Booking payment"
+}
+
+- Mark booking as PAID
+
+- Add field in booking:
+
+payment_mode: "wallet" or "razorpay"
+
+========================
+5. TRANSACTIONS TABLE
+========================
+
+Create:
+
+wallet_transactions:
+- id
+- user_id
+- type (credit/debit)
+- amount
+- note
+- created_at
+
+========================
+6. AGENT DASHBOARD
+========================
+
+Create dashboard:
+
+Show:
+- Wallet Balance
+- Total Bookings
+- Total Spent
+- Commission (optional)
+
+Display:
+
+Wallet: ₹{wallet_balance}
+
+Add:
+- Add Money button
+- Transaction history
+
+========================
+7. ADMIN PANEL
+========================
+
+- Show agent users
+- Show wallet balances
+- Show agent bookings
+- Filter bookings by agent_id
+
+========================
+8. SAFETY RULES
+========================
+
+- Prevent negative wallet
+- Do not allow double payment
+- Only update wallet after successful Razorpay payment
+- Do not apply markup twice
+
+========================
+9. TEST FLOW
+========================
+
+Agent:
+- Login
+- Add ₹1000
+- Book ticket ₹500
+- Wallet becomes ₹500
+
+========================
+GOAL:
+Agents can add money, book using wallet, and admin can track everything.
