@@ -150,7 +150,9 @@ function mapTripJackFlight(item: any, idx: number, fromIata: string, toIata: str
   const cabinClass = (priceInfo?.cc || "ECONOMY") === "BUSINESS" ? "Business" : "Economy";
   const seatsLeft  = priceInfo?.sR ?? 9;
 
-  const stops = Math.max(0, (item.sI?.length || 1) - 1);
+  const segCount = item.sI?.length ?? 1;
+  const stops = Math.max(0, segCount - 1);
+  const stopsLabel = segCount === 1 ? "Non-stop" : segCount === 2 ? "1 Stop" : "Multi-stop";
 
   return {
     id: idx + 1,
@@ -166,6 +168,7 @@ function mapTripJackFlight(item: any, idx: number, fromIata: string, toIata: str
     class: cabinClass,
     seatsAvailable: seatsLeft,
     stops,
+    stopsLabel,
     status: "scheduled",
   };
 }

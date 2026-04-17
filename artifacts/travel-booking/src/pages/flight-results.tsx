@@ -559,7 +559,7 @@ export default function FlightResults() {
                                     </div>
                                     <div className="flex-1 h-px bg-slate-200" />
                                   </div>
-                                  <p className="text-[10px] text-green-600 font-bold mt-1 uppercase tracking-wide">Non-stop</p>
+                                  <p className="text-[10px] text-green-600 font-bold mt-1 uppercase tracking-wide">{flight.stopsLabel ?? (flight.stops === 0 ? "Non-stop" : flight.stops === 1 ? "1 Stop" : "Multi-stop")}</p>
                                 </div>
 
                                 {/* Arrival */}

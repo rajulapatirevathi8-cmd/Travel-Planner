@@ -14,6 +14,7 @@ export interface LiveFlight {
   class: string;
   seatsAvailable: number;
   stops?: number;
+  stopsLabel?: string;
   status?: string;
 }
 
