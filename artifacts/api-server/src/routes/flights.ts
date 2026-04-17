@@ -212,7 +212,7 @@ router.post("/flights", async (req, res): Promise<void> => {
     },
   };
 
-  const apiRes = await fetch("https://api.tripjack.com/fms/v1/air-search-all", {
+  const apiRes = await fetch("https://apitest.tripjack.com/fms/v1/air-search-all", {
     method: "POST",
     headers: {
       apikey: tripJackKey,
@@ -223,9 +223,10 @@ router.post("/flights", async (req, res): Promise<void> => {
   });
 
   if (!apiRes.ok) {
-    const errText = await apiRes.text().catch(() => "");
-    console.error(`[flights/tripjack] HTTP ${apiRes.status}: ${errText}`);
-    res.status(apiRes.status).json({ error: `TripJack API error (${apiRes.status})`, detail: errText });
+    const errBody = await apiRes.json().catch(() => ({}));
+    const errMsg = errBody?.errors?.[0]?.message || errBody?.error || `HTTP ${apiRes.status}`;
+    console.error(`[flights/tripjack] ${errMsg}`);
+    res.status(apiRes.status).json({ error: errMsg, raw: errBody });
     return;
   }
 
