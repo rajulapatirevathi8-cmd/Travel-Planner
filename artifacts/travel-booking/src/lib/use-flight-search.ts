@@ -20,7 +20,8 @@ export interface LiveFlight {
 interface LiveSearchResult {
   flights: LiveFlight[];
   total: number;
-  source: "tripjack";
+  source: "tripjack" | "scheduled";
+  fallbackMessage?: string;
   error?: string;
 }
 
@@ -58,7 +59,7 @@ export function useFlightSearch(from: string, to: string, date: string) {
     usingFallback: false,
     errorMessage: query.error?.message,
     source: query.data?.source ?? null,
-    fallbackMessage: undefined,
+    fallbackMessage: query.data?.fallbackMessage,
     refetch: query.refetch,
   };
 }

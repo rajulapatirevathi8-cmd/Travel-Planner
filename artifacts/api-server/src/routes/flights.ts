@@ -158,6 +158,41 @@ function mapTripJackFlight(item: any, idx: number, fromIata: string, toIata: str
   };
 }
 
+// ── Sample flights builder — used when TripJack returns 0 or errors ────────
+function buildSampleFlights(fromIata: string, toIata: string) {
+  const SAMPLES = [
+    { name: "IndiGo",    code: "6E", num: "301", dep: "06:00", arr: "08:15", price: 3499 },
+    { name: "Air India", code: "AI", num: "504", dep: "10:30", arr: "12:50", price: 4799 },
+    { name: "Vistara",   code: "UK", num: "440", dep: "15:45", arr: "18:05", price: 5299 },
+  ];
+  const origin = CANONICAL[fromIata] || fromIata;
+  const dest   = CANONICAL[toIata]   || toIata;
+
+  return SAMPLES.map((a, idx) => {
+    const [dh, dm] = a.dep.split(":").map(Number);
+    const [ah, am] = a.arr.split(":").map(Number);
+    const durMins  = (ah * 60 + am) - (dh * 60 + dm);
+    return {
+      id: idx + 1,
+      airline: a.name,
+      airlineCode: a.code,
+      flightNumber: `${a.code}-${a.num}`,
+      origin,
+      destination: dest,
+      departureTime: a.dep,
+      arrivalTime:   a.arr,
+      duration: `${Math.floor(durMins / 60)}h ${(durMins % 60).toString().padStart(2, "0")}m`,
+      price: a.price,
+      class: "Economy",
+      seatsAvailable: 9,
+      stops: 0,
+      status: "scheduled",
+    };
+  });
+}
+
+const SAMPLE_FALLBACK_MSG = "Live flight data is limited in test mode. Showing sample results.";
+
 // ── POST /api/flights — TripJack live search ───────────────────────────────
 router.post("/flights", async (req, res): Promise<void> => {
   const {
@@ -190,63 +225,53 @@ router.post("/flights", async (req, res): Promise<void> => {
     return;
   }
 
-  const travelDate  = date || new Date().toISOString().slice(0, 10);
-  const adultCount  = Math.max(1, Number(passengers) || 1);
-  const cabinClass  = String(requestedClass).toUpperCase() === "BUSINESS" ? "BUSINESS" : "ECONOMY";
+  const travelDate = date || new Date().toISOString().slice(0, 10);
+  const adultCount = Math.max(1, Number(passengers) || 1);
+  const cabinClass = String(requestedClass).toUpperCase() === "BUSINESS" ? "BUSINESS" : "ECONOMY";
 
   const tripJackBody = {
     searchQuery: {
       cabinClass,
       paxInfo: { ADULT: adultCount, CHILD: 0, INFANT: 0 },
-      routeInfos: [
-        {
-          fromCityOrAirport: { code: fromIata },
-          toCityOrAirport:   { code: toIata },
-          travelDate,
-        },
-      ],
-      searchModifiers: {
-        isDirectFlight: false,
-        isConnectingFlight: false,
-      },
+      routeInfos: [{ fromCityOrAirport: { code: fromIata }, toCityOrAirport: { code: toIata }, travelDate }],
+      searchModifiers: { isDirectFlight: false, isConnectingFlight: false },
     },
   };
 
-  const apiRes = await fetch("https://apitest.tripjack.com/fms/v1/air-search-all", {
-    method: "POST",
-    headers: {
-      apikey: tripJackKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(tripJackBody),
-    signal: AbortSignal.timeout(20_000),
-  });
+  try {
+    const apiRes = await fetch("https://apitest.tripjack.com/fms/v1/air-search-all", {
+      method: "POST",
+      headers: { apikey: tripJackKey, "Content-Type": "application/json" },
+      body: JSON.stringify(tripJackBody),
+      signal: AbortSignal.timeout(20_000),
+    });
 
-  if (!apiRes.ok) {
-    const errBody = await apiRes.json().catch(() => ({}));
-    const errMsg = errBody?.errors?.[0]?.message || errBody?.error || `HTTP ${apiRes.status}`;
-    console.error(`[flights/tripjack] ${errMsg}`);
-    res.status(apiRes.status).json({ error: errMsg, raw: errBody });
-    return;
+    const data: any = await apiRes.json().catch(() => ({}));
+
+    if (apiRes.ok && !data?.errors?.length) {
+      const onward: any[] = data?.tripInfos?.ONWARD || [];
+      const flights = onward.map((item, idx) => mapTripJackFlight(item, idx, fromIata, toIata));
+      console.log(`[flights/tripjack] ${fromIata}→${toIata} on ${travelDate}: ${flights.length} flights`);
+
+      if (flights.length > 0) {
+        res.json({ flights, total: flights.length, source: "tripjack" });
+        return;
+      }
+    } else {
+      const reason = data?.errors?.[0]?.message || `HTTP ${apiRes.status}`;
+      console.warn(`[flights/tripjack] API unavailable: ${reason} — serving sample flights`);
+    }
+  } catch (err: any) {
+    console.warn(`[flights/tripjack] Request failed: ${err?.message} — serving sample flights`);
   }
 
-  const data: any = await apiRes.json();
-
-  if (data?.errors?.length) {
-    console.error("[flights/tripjack] API errors:", data.errors);
-    res.status(400).json({ error: data.errors[0]?.message || "TripJack returned an error", raw: data });
-    return;
-  }
-
-  const onward: any[] = data?.tripInfos?.ONWARD || [];
-  const flights = onward.map((item, idx) => mapTripJackFlight(item, idx, fromIata, toIata));
-
-  console.log(`[flights/tripjack] ${fromIata}→${toIata} on ${travelDate}: ${flights.length} flights`);
-
+  // TripJack returned 0 results or an error — serve sample cards
+  const sampleFlights = buildSampleFlights(fromIata, toIata);
   res.json({
-    flights,
-    total: flights.length,
-    source: "tripjack",
+    flights: sampleFlights,
+    total: sampleFlights.length,
+    source: "scheduled",
+    fallbackMessage: SAMPLE_FALLBACK_MSG,
   });
 });
 
