@@ -150,7 +150,7 @@ export function SearchTabs({
               <div className="lg:col-span-2 flex flex-col sm:flex-row sm:items-end gap-1.5 sm:gap-2">
                 <div className="flex-1 min-w-0 space-y-1">
                   <label className={labelCls}>From</label>
-                  <AutocompleteInput placeholder="City or Airport" suggestions={fromSuggestions} value={flightFrom} onChange={setFlightFrom} maxSuggestions={6} />
+                  <AutocompleteInput placeholder="City or Airport" suggestions={fromSuggestions} value={flightFrom} onChange={setFlightFrom} maxSuggestions={10} />
                 </div>
                 <button onClick={handleFlightSwap}
                   className="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center shadow-sm shrink-0 self-center sm:self-auto sm:mb-0.5 my-0 sm:my-0"
@@ -159,7 +159,7 @@ export function SearchTabs({
                 </button>
                 <div className="flex-1 min-w-0 space-y-1">
                   <label className={labelCls}>To</label>
-                  <AutocompleteInput placeholder="City or Airport" suggestions={toSuggestions} value={flightTo} onChange={setFlightTo} maxSuggestions={6} />
+                  <AutocompleteInput placeholder="City or Airport" suggestions={toSuggestions} value={flightTo} onChange={setFlightTo} maxSuggestions={10} />
                 </div>
               </div>
               <div className="space-y-1">

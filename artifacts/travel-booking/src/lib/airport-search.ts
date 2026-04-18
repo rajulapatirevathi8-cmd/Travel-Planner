@@ -63,43 +63,16 @@ export function loadAirports(): Promise<AirportEntry[]> {
   return _loadPromise;
 }
 
-const INDIA_MAX = 4;
-const INTL_MAX  = 2;
-
-function scoreMatch(
-  displayCity: string,
-  originalCity: string,
-  airportName: string,
-  iata: string,
-  q: string
-): number {
-  const dLow = displayCity.toLowerCase();
-  const oLow = originalCity.toLowerCase();
-  const nLow = airportName.toLowerCase();
-  const iLow = iata.toLowerCase();
-
-  if (dLow === q)              return 100; // exact city match
-  if (iLow === q)              return 90;  // exact IATA match
-  if (dLow.startsWith(q))     return 80;  // city starts with
-  if (oLow.startsWith(q))     return 70;  // original city starts with
-  if (nLow.startsWith(q))     return 60;  // airport name starts with
-  if (dLow.includes(q))       return 50;  // city contains
-  if (oLow.includes(q))       return 40;  // original city contains
-  if (nLow.includes(q))       return 30;  // airport name contains
-  if (iLow.includes(q))       return 20;  // IATA contains
-  return 0;
-}
-
 export function searchAirports(
   airports: AirportEntry[],
-  query: string
+  query: string,
+  limit = 10
 ): AirportSuggestion[] {
   const q = query.toLowerCase().trim();
   if (q.length < 1) return [];
 
   type Scored = { suggestion: AirportSuggestion; score: number };
-  const india: Scored[] = [];
-  const intl:  Scored[] = [];
+  const scored: Scored[] = [];
 
   for (const a of airports) {
     const originalCity = a.City || "";
@@ -107,30 +80,38 @@ export function searchAirports(
     const name         = a["Airport name"] || "";
     const iata         = a.IATA || "";
 
-    const score = scoreMatch(displayCity, originalCity, name, iata, q);
-    if (score === 0) continue;
+    const dLow  = displayCity.toLowerCase();
+    const oLow  = originalCity.toLowerCase();
+    const nLow  = name.toLowerCase();
+    const iLow  = iata.toLowerCase();
 
-    const entry: Scored = {
-      score,
-      suggestion: {
-        name: displayCity || name,
-        airportName: name,
-        code: iata,
-        country: a.Country,
-      },
-    };
+    // Score: higher = better match (shown first)
+    let score = 0;
+    if (dLow === q)              score = 100; // exact city match (highest)
+    else if (iLow === q)         score = 90;  // exact IATA match
+    else if (dLow.startsWith(q)) score = 80;  // city starts with query
+    else if (oLow.startsWith(q)) score = 70;  // original city starts with
+    else if (nLow.startsWith(q)) score = 60;  // airport name starts with
+    else if (dLow.includes(q))   score = 50;  // city contains
+    else if (oLow.includes(q))   score = 40;  // original city contains
+    else if (nLow.includes(q))   score = 30;  // airport name contains
+    else if (iLow.includes(q))   score = 20;  // IATA contains
 
-    if (a.Country === "India") {
-      india.push(entry);
-    } else {
-      intl.push(entry);
+    if (score > 0) {
+      scored.push({
+        score,
+        suggestion: {
+          name: displayCity || name,
+          airportName: name,
+          code: iata,
+          country: a.Country,
+        },
+      });
     }
   }
 
-  const sortDesc = (a: Scored, b: Scored) => b.score - a.score;
-
-  const topIndia = india.sort(sortDesc).slice(0, INDIA_MAX).map((s) => s.suggestion);
-  const topIntl  = intl.sort(sortDesc).slice(0, INTL_MAX).map((s) => s.suggestion);
-
-  return [...topIndia, ...topIntl];
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((s) => s.suggestion);
 }
