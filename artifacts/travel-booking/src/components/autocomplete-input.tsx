@@ -17,7 +17,6 @@ type AutocompleteInputProps = {
   value: string;
   onChange: (value: string, code?: string) => void;
   className?: string;
-  maxSuggestions?: number;
 };
 
 export function AutocompleteInput({
@@ -26,7 +25,6 @@ export function AutocompleteInput({
   value,
   onChange,
   className,
-  maxSuggestions = 8,
 }: AutocompleteInputProps) {
   const [isOpen,              setIsOpen]              = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([]);
@@ -61,7 +59,7 @@ export function AutocompleteInput({
         (s.code && s.code.toLowerCase().includes(q)) ||
         (s.state && s.state.toLowerCase().includes(q)) ||
         (s.country && s.country.toLowerCase().includes(q))
-    ).slice(0, maxSuggestions);
+    ).slice(0, 8);
 
     setFilteredSuggestions(filtered);
     setIsOpen(filtered.length > 0);
