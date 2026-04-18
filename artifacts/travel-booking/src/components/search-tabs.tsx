@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AutocompleteInput } from "@/components/autocomplete-input";
 import { citySuggestions, busCitySuggestions, hotelCitySuggestions, packageDestinations } from "@/lib/city-suggestions";
+import { loadAirports, searchAirports, type AirportEntry, type AirportSuggestion } from "@/lib/airport-search";
 import { Plane, Bus, Building2, Map, Search, ArrowLeftRight } from "lucide-react";
 
 interface SearchTabsProps {
@@ -30,6 +31,32 @@ export function SearchTabs({
   const [flightFrom, setFlightFrom] = useState(initialFrom);
   const [flightTo,   setFlightTo]   = useState(initialTo);
   const [flightDate, setFlightDate] = useState(initialDate || today);
+
+  const [airportData,      setAirportData]      = useState<AirportEntry[]>([]);
+  const [fromSuggestions,  setFromSuggestions]  = useState<AirportSuggestion[]>([]);
+  const [toSuggestions,    setToSuggestions]    = useState<AirportSuggestion[]>([]);
+  const fromDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toDebounceRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    loadAirports().then(setAirportData);
+  }, []);
+
+  useEffect(() => {
+    if (fromDebounceRef.current) clearTimeout(fromDebounceRef.current);
+    fromDebounceRef.current = setTimeout(() => {
+      setFromSuggestions(airportData.length ? searchAirports(airportData, flightFrom) : []);
+    }, 300);
+    return () => { if (fromDebounceRef.current) clearTimeout(fromDebounceRef.current); };
+  }, [flightFrom, airportData]);
+
+  useEffect(() => {
+    if (toDebounceRef.current) clearTimeout(toDebounceRef.current);
+    toDebounceRef.current = setTimeout(() => {
+      setToSuggestions(airportData.length ? searchAirports(airportData, flightTo) : []);
+    }, 300);
+    return () => { if (toDebounceRef.current) clearTimeout(toDebounceRef.current); };
+  }, [flightTo, airportData]);
 
   const [hotelLocation,   setHotelLocation]   = useState("");
   const [hotelSearchCity, setHotelSearchCity] = useState(""); // actual city for search (may differ if hotel brand selected)
@@ -123,7 +150,7 @@ export function SearchTabs({
               <div className="lg:col-span-2 flex flex-col sm:flex-row sm:items-end gap-1.5 sm:gap-2">
                 <div className="flex-1 min-w-0 space-y-1">
                   <label className={labelCls}>From</label>
-                  <AutocompleteInput placeholder="City or Airport" suggestions={citySuggestions} value={flightFrom} onChange={setFlightFrom} />
+                  <AutocompleteInput placeholder="City or Airport" suggestions={fromSuggestions} value={flightFrom} onChange={setFlightFrom} maxSuggestions={10} />
                 </div>
                 <button onClick={handleFlightSwap}
                   className="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center shadow-sm shrink-0 self-center sm:self-auto sm:mb-0.5 my-0 sm:my-0"
@@ -132,7 +159,7 @@ export function SearchTabs({
                 </button>
                 <div className="flex-1 min-w-0 space-y-1">
                   <label className={labelCls}>To</label>
-                  <AutocompleteInput placeholder="City or Airport" suggestions={citySuggestions} value={flightTo} onChange={setFlightTo} />
+                  <AutocompleteInput placeholder="City or Airport" suggestions={toSuggestions} value={flightTo} onChange={setFlightTo} maxSuggestions={10} />
                 </div>
               </div>
               <div className="space-y-1">

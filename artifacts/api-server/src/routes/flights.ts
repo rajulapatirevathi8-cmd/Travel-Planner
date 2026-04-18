@@ -92,11 +92,14 @@ function resolveIata(raw: string): string | undefined {
   const clean = raw.trim();
   if (!clean) return undefined;
 
+  // "Rajahmundry (RJA) - India" or "Mumbai (BOM)" → extract 3-letter code directly
   const codeMatch = clean.match(/\(([A-Z]{3})\)\s*(?:-.*)?$/);
-  if (codeMatch && KNOWN_IATA_CODES.has(codeMatch[1])) return codeMatch[1];
+  if (codeMatch) return codeMatch[1];
 
-  if (/^[A-Z]{3}$/.test(clean) && KNOWN_IATA_CODES.has(clean)) return clean;
+  // Plain uppercase 3-letter code like "BOM" or "DEL"
+  if (/^[A-Z]{3}$/.test(clean)) return clean;
 
+  // City name lookup (e.g. "Mumbai", "Delhi")
   const cityOnly = clean.replace(/\s*\(.*\)\s*$/, "").toLowerCase().trim();
   if (CITY_TO_IATA[cityOnly]) return CITY_TO_IATA[cityOnly];
 
