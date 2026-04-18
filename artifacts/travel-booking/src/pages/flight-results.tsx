@@ -109,7 +109,12 @@ export default function FlightResults() {
     const matchesPrice   = displayPrice >= priceRange[0] && displayPrice <= priceRange[1];
     const matchesAirline = selectedAirlines.length === 0 || selectedAirlines.includes(flight.airline);
     const matchesTime    = departureFilter.length === 0  || departureFilter.includes(getTimePeriod(flight.departureTime));
-    const matchesNonStop = !nonStopOnly || (flight.stops ?? 0) === 0;
+    const resolvedStops  = flight.stops !== undefined        ? flight.stops
+      : flight.stopsLabel === "Non-stop"                     ? 0
+      : flight.stopsLabel === "1 Stop"                       ? 1
+      : flight.stopsLabel                                    ? 2
+      : -1; // unknown — excluded when filter is active
+    const matchesNonStop = !nonStopOnly || resolvedStops === 0;
 
     // For today: hide flights that departed more than 15 minutes ago
     const notPast = (() => {
